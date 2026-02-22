@@ -8,7 +8,7 @@ All messages between peers must be valid JSON and contain a `type` field.
 
 ```json
 {
-  "type": "SYNC_UPDATE | INITIAL_PEER_LIST | HEARTBEAT",
+  "type": "SYNC_UPDATE | INITIAL_PEER_LIST | SYNC_TOPIC | HEARTBEAT",
   "payload": { ... }
 }
 ```
@@ -29,8 +29,22 @@ Sent when a user updates their name or completes a slider interaction.
 }
 ```
 
-### 2. `INITIAL_PEER_LIST`
-Sent by the "lobby-anchor" to a newly joined peer.
+### 2. `SYNC_TOPIC`
+Sent when a user updates the "Topic" or the "Scale Labels".
+
+```json
+{
+  "type": "SYNC_TOPIC",
+  "payload": {
+    "topic": "Will AI replace programmers?",
+    "labelMin": "Definitely No",
+    "labelMax": "Definitely Yes"
+  }
+}
+```
+
+### 3. `INITIAL_PEER_LIST`
+Sent by the "Anchor" to a newly joined peer.
 
 ```json
 {
@@ -46,6 +60,8 @@ Sent by the "lobby-anchor" to a newly joined peer.
 
 ## UI Contracts (Client-side Only)
 The frontend components must adhere to the following data-flow:
-- `SliderComponent`: Emits `onChangeCommitted` events (from `shadcn/ui` slider) to the P2P broadcast manager.
-- `ParticipantList`: Subscribes to the `participants` map state from the P2P connection provider.
-- `ParticipantPositionBar`: Subscribes to the `participants` map state from the P2P connection provider to render markers on a shared 0-100 axis.
+- `SliderComponent`: Emits `onValueCommit` events (from `shadcn/ui` slider) to the P2P broadcast manager via `usePeer`.
+- `NameInput`: Emits `onChange` events to the P2P broadcast manager via `usePeer`.
+- `ParticipantList`: Subscribes to the `participants` array and `myState` from `usePeer`.
+- `ParticipantPositionBar`: Subscribes to the `participants` array and `myState` from `usePeer`.
+- `TopicCard`: Subscribes to `topic`, `labelMin`, `labelMax` and `updateTopic` from `usePeer`.

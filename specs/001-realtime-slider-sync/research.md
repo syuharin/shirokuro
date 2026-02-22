@@ -1,38 +1,46 @@
-# Research: Participant Position Bar
+# Research: P2P Synchronization and Distribution Map
 
-## Decision: Horizontal Position Bar with Overlaid Markers
+## Decision: Deterministic Anchor for P2P Discovery
 
 ### Rationale
-A horizontal bar mapping 0-100 to the screen width is the most direct representation of the slider value. Overlaying markers for each participant allows for immediate visual comparison of all users in the room.
+To allow users to find each other without a central server or database, the first user to enter a room attempts to claim a deterministic ID: `shirokuro-anchor-[roomId]`. Subsequent users, seeing this ID is taken, join as regular peers and connect to this anchor.
 
-### Alternatives Considered
-1. **Vertical Bar Chart**: Good for comparing exact values, but takes up more vertical space and is less intuitive for a 0-100 "spectrum".
-2. **Individual Progress Bars**: Redundant since we already have the numeric list. Doesn't help with "where everyone is relative to each other" as much as a shared axis.
+### Peer Management (Anchor Role)
+- The Anchor maintains a list of all current connections.
+- When a new peer joins, the Anchor sends them the `INITIAL_PEER_LIST` containing existing Peer IDs.
+- This creates a **mesh topology** where all peers are eventually connected to each other, rather than a star topology around the anchor.
+
+## Decision: Room Metadata (Topic) Synchronization
+
+### Rationale
+A collaborative slider needs context. We implement a "Topic" system where users can set what the slider measures (e.g., "Will AI replace programmers?").
+
+### Implementation
+- Added `SYNC_TOPIC` payload.
+- When a peer joins, the Anchor immediately sends the current topic and labels to them.
+- Any participant can edit the topic, which broadcasts the change to everyone.
+
+## Decision: Horizontal Distribution Map with Collision Handling
+
+### Rationale
+Visualizing where everyone stands relative to each other is more intuitive than a simple list. A horizontal track with overlaid markers provides this "spectrum" view.
+
+### Collision Handling
+- If multiple users have the same or close values (within a proximity threshold), markers are offset vertically.
+- This allows up to 10 users to be seen clearly even if they all choose the same value.
 
 ## Technical Details
 
 ### UI Implementation
-- **Container**: A full-width horizontal track (Tailwind: `relative h-12 w-full bg-neutral-100 rounded-full overflow-hidden`).
-- **Markers**: 
-  - Absolute positioned elements: `left: [value]%`.
-  - Content: Small circle with initials or the first letter of the name.
-  - Hover: Show full name and value.
-  - Collision handling: If multiple users have the same value, stack them vertically or offset slightly (for up to 10 users, slight vertical offset or simple stacking is fine).
-
-### Color Logic
-- Use the same color scale as the `ParticipantList` for consistency:
-  - High (>= 80): Emerald
-  - Low (<= 20): Red
-  - Mid: Neutral/Gray
+- **Component**: `ParticipantPositionBar`
+- **Visuals**: Track with an axis line. Markers are animated using `framer-motion` (or standard Tailwind transitions) for smooth movement when values update.
+- **Self-Highlight**: The current user's marker is black with a pulse effect to distinguish it from others.
 
 ### State Management
-- The component will consume `myState` and `participants` array from the parent (same as `ParticipantList`).
-- Updates are reactive to the `SYNC_UPDATE` events already handled by `usePeer`.
-
-## Testing Gaps
-- **Observation**: No testing framework currently configured in `package.json`.
-- **Recommendation**: Integrate **Vitest** for unit testing the positioning logic and **Playwright** for E2E testing of the P2P synchronization.
-- **Task**: For this feature, we will focus on the component implementation but document the need for a test runner.
+- `usePeer` hook encapsulates all PeerJS logic, providing `participants` (array of `PeerState`) and `updateMyState` to components.
+- Components are stateless and reactive to the `usePeer` state.
 
 ## Dependencies
-- No new dependencies required. Standard React and Tailwind CSS will suffice.
+- **PeerJS**: For WebRTC abstraction.
+- **Lucide React**: For iconography.
+- **Tailwind CSS**: For all styling and animations.

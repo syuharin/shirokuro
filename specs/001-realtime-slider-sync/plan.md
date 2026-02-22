@@ -1,34 +1,30 @@
-# Implementation Plan: Visual position bar for participants
+# Implementation Plan: Real-time slider synchronization in P2P rooms
 
-**Branch**: `001-realtime-slider-sync` | **Date**: 2026-02-22 | **Spec**: `/specs/001-realtime-slider-sync/spec.md`
-**Input**: User description: "0から100の間でみんながどの位置にあるのか可視化したいです。バーを追加できますか？"
+**Branch**: `001-realtime-slider-sync` | **Date**: 2026-02-22 | **Spec**: [specs/001-realtime-slider-sync/spec.md]
 
 ## Summary
-
-The current implementation shows a participant list. This feature adds a visual horizontal bar (0-100 range) where markers representing each participant are displayed at their respective slider positions. This allows users to intuitively see the relative positioning of all members in the room at once.
+Implement a serverless real-time synchronization application using PeerJS for P2P communication. The application allows users to join a room via URL, share their display name, and synchronize a slider value (0-100) across all participants. It includes a "Topic" system to define the context of the slider.
 
 ## Technical Context
 
-**Language/Version**: TypeScript / Next.js 16  
-**Primary Dependencies**: React 19, PeerJS, Tailwind CSS 4, Lucide React  
-**Storage**: N/A (In-memory P2P state)  
-**Testing**: NEEDS CLARIFICATION (No test framework found in package.json)  
-**Target Platform**: Vercel (Hobby plan)
-**Project Type**: Web application  
-**Performance Goals**: Real-time position updates (< 500ms broadcast delay)  
-**Constraints**: Maximum 10 concurrent participants  
-**Scale/Scope**: Small interactive component integration  
+**Language/Version**: TypeScript / Next.js 15 (App Router)  
+**Primary Dependencies**: PeerJS, Lucide React, Shadcn/UI (Tailwind CSS)  
+**Storage**: N/A (Transient P2P only)  
+**Testing**: Vitest (Recommended for logic), Playwright (Recommended for E2E)  
+**Target Platform**: Vercel (Hobby Plan)
+**Project Type**: Web Application (Client-side focus)  
+**Performance Goals**: <500ms sync latency, up to 10 concurrent users.  
+**Constraints**: No server-side persistence, WebRTC-based connectivity.  
+**Scale/Scope**: Small-scale collaborative tool.
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
-
-- [x] **Zero Database Policy**: All state is local or P2P. (YES)
-- [x] **No User Management**: Temporary display names only. (YES)
-- [x] **Stateless Grouping**: Room ID in URL path. (YES)
-- [x] **Real-time P2P**: PeerJS used for broadcast. (YES)
-- [x] **Vercel Native**: Simple React components and P2P logic. (YES)
-- [x] **Minimalist UI**: Adding a single visualization component. (YES)
+- [x] **Zero Database Policy**: No database used. (YES)
+- [x] **No User Management**: No logins or persistent sessions. (YES)
+- [x] **Stateless Grouping**: Grouping is handled by room IDs in the URL. (YES)
+- [x] **Real-time P2P**: PeerJS used for WebRTC sync. (YES)
+- [x] **Vercel Native**: Fully client-side logic compatible with Vercel. (YES)
+- [x] **Minimalist UI**: Clean, focus-driven UI. (YES)
 
 ## Project Structure
 
@@ -36,40 +32,35 @@ The current implementation shows a participant list. This feature adds a visual 
 
 ```text
 specs/001-realtime-slider-sync/
+├── spec.md              # Feature Specification
 ├── plan.md              # This file
-├── research.md          # Phase 0 output
-├── data-model.md        # Phase 1 output
-├── quickstart.md        # Phase 1 output
-├── contracts/           # Phase 1 output
-│   └── p2p-payloads.md
-└── tasks.md             # Phase 2 output
+├── research.md          # Technical decisions
+├── data-model.md        # State and component models
+├── quickstart.md        # Implementation steps
+├── contracts/           # P2P Payload definitions
+└── checklists/          # Requirements validation
 ```
 
-### Source Code (repository root)
+### Source Code
 
 ```text
 src/
 ├── app/
-│   └── room/[id]/page.tsx
+│   ├── page.tsx               # Homepage (Create Group)
+│   └── room/[id]/page.tsx     # Room Page (Main UI)
 ├── components/
-│   ├── ParticipantPositionBar.tsx (NEW)
-│   ├── SliderComponent.tsx
-│   └── ParticipantList.tsx
+│   ├── NameInput.tsx          # Name editor
+│   ├── ParticipantList.tsx    # Numeric list of participants
+│   ├── ParticipantPositionBar.tsx # Visual distribution map
+│   ├── SliderComponent.tsx    # Slider input
+│   └── ui/                    # Shadcn base components
 ├── hooks/
-│   └── usePeer.ts
-└── lib/
-    ├── types.ts
-    └── utils.ts
+│   └── usePeer.ts             # Core P2P orchestration hook
+├── lib/
+│   ├── types.ts               # Shared TypeScript types
+│   └── utils.ts               # Utility functions (Room ID gen)
 ```
-
-**Structure Decision**: Integration into existing Next.js app structure. Added `ParticipantPositionBar.tsx` for the shared visualization.
-
 
 ## Complexity Tracking
 
-> **Fill ONLY if Constitution Check has violations that must be justified**
-
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+*No violations to track.*
