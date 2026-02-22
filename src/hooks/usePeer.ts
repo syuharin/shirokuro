@@ -189,8 +189,9 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
         setStatus('connected');
       });
 
-      peer.on('error', (err: any) => {
-        if (err.type === 'unavailable-id') {
+      peer.on('error', (err) => {
+        const error = err as { type: string };
+        if (error.type === 'unavailable-id') {
           // Anchor exists, join as regular peer
           console.log('Anchor exists, joining as regular peer...');
           const randomId = `${PREFIX}peer-${Math.random().toString(36).substr(2, 9)}`;

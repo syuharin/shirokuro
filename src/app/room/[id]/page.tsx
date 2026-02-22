@@ -9,6 +9,7 @@ import { useState } from "react";
 import { SliderComponent } from "@/components/SliderComponent";
 import { NameInput } from "@/components/NameInput";
 import { ParticipantList } from "@/components/ParticipantList";
+import { ParticipantPositionBar } from "@/components/ParticipantPositionBar";
 import { Input } from "@/components/ui/input";
 
 export default function RoomPage() {
@@ -158,6 +159,14 @@ export default function RoomPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Distribution Map - Moved here for better visibility */}
+        <div className="bg-white p-6 rounded-3xl border border-neutral-200 shadow-sm">
+          <ParticipantPositionBar 
+            myState={myState}
+            participants={participants}
+          />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
           {/* My Controls */}

@@ -1,9 +1,9 @@
 ---
 
-description: "Task list for real-time slider synchronization in P2P rooms"
+description: "Task list for real-time slider synchronization and visualization in P2P rooms"
 ---
 
-# Tasks: Real-time slider synchronization in P2P rooms
+# Tasks: Real-time slider synchronization and visualization
 
 **Input**: Design documents from `/specs/001-realtime-slider-sync/`
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/p2p-payloads.md
@@ -66,7 +66,23 @@ description: "Task list for real-time slider synchronization in P2P rooms"
 
 **Checkpoint**: User Story 3 functional - Full participation list with real-time join/leave updates.
 
-## Phase 6: Polish & Cross-Cutting Concerns
+## Phase 6: User Story 4 - Visual Position Bar (Priority: P1) 🎯 NEW
+
+**Goal**: Provide a shared horizontal bar where markers for all participants are displayed at their respective slider positions.
+
+**Independent Test**: Open multiple tabs on the same room URL, move the slider in one tab, and verify that the corresponding marker in the `ParticipantPositionBar` updates in all tabs instantly.
+
+### Implementation for User Story 4
+
+- [x] T026 [P] [US4] Create `ParticipantPositionBar.tsx` skeleton in src/components/ParticipantPositionBar.tsx
+- [x] T027 [US4] Implement marker rendering logic with absolute positioning based on `value` in src/components/ParticipantPositionBar.tsx
+- [x] T028 [US4] Add participant names and values on hover for markers in src/components/ParticipantPositionBar.tsx
+- [x] T029 [US4] Integrate `ParticipantPositionBar` above the `SliderComponent` in src/app/room/[id]/page.tsx
+- [x] T030 [US4] Implement marker collision handling (slight vertical offset) in src/components/ParticipantPositionBar.tsx
+
+**Checkpoint**: User Story 4 functional - All participants' relative positions are visually represented on a single axis.
+
+## Phase 7: Polish & Cross-Cutting Concerns
 
 **Purpose**: Final refinements and deployment
 
@@ -75,20 +91,37 @@ description: "Task list for real-time slider synchronization in P2P rooms"
 - [x] T022 [P] Configure Vercel deployment settings in vercel.json (if needed)
 - [x] T023 [P] Performance Verification: Connect with 3+ tabs and visually confirm sync latency is under 500ms (SC-003)
 - [x] T024 [P] Capacity Verification: Connect with 10 tabs and confirm stability without significant degradation (SC-004)
-- [x] T025 Run quickstart.md validation to ensure all SC-xxx criteria are met
+- [x] T031 Refine marker styling and animations in src/components/ParticipantPositionBar.tsx
+- [x] T032 Run quickstart.md validation for the new visualization component
+
+---
 
 ## Dependencies & Execution Order
 
-1. **Setup (Phase 1)** -> **Foundational (Phase 2)**
-2. **Foundational (Phase 2)** -> **User Story 1 & 2 (P1)**
-3. **User Story 1 & 2** are the MVP.
-4. **User Story 3** depends on User Story 2's base P2P implementation.
-5. **Polish** follows all functional stories.
+1. **Foundational (Phase 2)** -> **User Story 4 (P1)**: The bar visualization depends on the existing P2P state (`participants` and `myState`).
+2. **User Story 4** can be implemented after Phase 5 is complete.
+3. **Polish (Phase 7)**: T031 and T032 follow the implementation of User Story 4.
 
 ## Parallel Opportunities
 
-- T002, T003 (Dependencies/UI components)
-- T005, T008 (Utils/Types)
-- T012, T013 (UI Components for Story 2)
-- T016 (UI Component for Story 3)
-- T020, T021, T022 (Polish tasks)
+- T026 (UI component skeleton) can start independently of integration tasks.
+- T031 (Styling) can be worked on as soon as T027 is done.
+
+---
+
+## Parallel Example: User Story 4
+
+```bash
+# Start the component development
+Task: "Create ParticipantPositionBar.tsx skeleton in src/components/ParticipantPositionBar.tsx"
+```
+
+## Implementation Strategy
+
+### Incremental Delivery (Visual Bar)
+
+1. **Skeleton First**: Create the bar track and a static marker.
+2. **Dynamic Mapping**: Connect to `myState` and `participants` to move markers dynamically.
+3. **Integration**: Add to the room page to verify real-time updates.
+4. **Collision Handling**: Ensure multiple markers at the same position remain visible.
+5. **Final Polish**: Add hover names and smooth transitions.

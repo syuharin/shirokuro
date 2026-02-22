@@ -1,23 +1,27 @@
-# Quickstart: 001-realtime-slider-sync
+# Quickstart: Implementing ParticipantPositionBar
 
-**Goal**: Establish a real-time slider sync room between two or more browser tabs.
+## Steps to Implement
 
-## Prerequisites
-- Node.js (v18+)
-- Vercel CLI (optional for deployment)
+1. **Create the Component**:
+   - Path: `src/components/ParticipantPositionBar.tsx`
+   - Use Tailwind CSS to create a horizontal track.
+   - Map `myState` and `participants` to absolute-positioned markers.
 
-## Setup
-1. `npm install` (to install PeerJS, Next.js, and shadcn/ui).
-2. `npm run dev` to start the local development server.
+2. **Integrate into Room Page**:
+   - Path: `src/app/room/[id]/page.tsx`
+   - Import and place `<ParticipantPositionBar />` above or below the `SliderComponent`.
 
-## Local Test Flow
-1. Open `http://localhost:3000` in a browser.
-2. Click **Create Group** to generate a unique Room ID (e.g., `/room/xyz`).
-3. Copy the URL and open it in a **private window** or another browser.
-4. Enter different **Names** in each window.
-5. Move the **Slider** in one window and observe the value updating in the participant list of the other window upon releasing the mouse.
+3. **Verify Synchronicity**:
+   - Open two browser tabs on the same room URL.
+   - Adjust the slider in one tab.
+   - Verify the marker in the `ParticipantPositionBar` in both tabs updates in real-time.
 
-## Verification
-- [ ] No database requests are visible in the Network tab.
-- [ ] P2P connections are established (verify PeerJS console logs or data channel connectivity).
-- [ ] All participants see all other participants' values correctly.
+## Example Rendering Logic
+```tsx
+const calculateLeft = (value: number) => `calc(${value}% - 12px)`; // 12px = half of marker width
+```
+
+## Styling Notes
+- Track: `bg-neutral-100 rounded-full h-8 w-full border border-neutral-200`
+- Marker (Self): `bg-black text-white rounded-full p-2 border-2 border-white shadow-lg`
+- Marker (Others): `bg-white text-black border-neutral-300 rounded-full p-2 shadow-sm`

@@ -48,3 +48,4 @@ Sent by the "lobby-anchor" to a newly joined peer.
 The frontend components must adhere to the following data-flow:
 - `SliderComponent`: Emits `onChangeCommitted` events (from `shadcn/ui` slider) to the P2P broadcast manager.
 - `ParticipantList`: Subscribes to the `participants` map state from the P2P connection provider.
+- `ParticipantPositionBar`: Subscribes to the `participants` map state from the P2P connection provider to render markers on a shared 0-100 axis.
