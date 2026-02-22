@@ -73,6 +73,9 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
     if (payload.type === 'SYNC_UPDATE') {
       const { peerId, name, value } = payload.payload;
       
+      // Skip if this is my own data (prevents double self in participants list)
+      if (peerId === myStateRef.current.peerId) return;
+
       setParticipants((prev) => {
         const index = prev.findIndex((p) => p.peerId === peerId);
         if (index >= 0) {
