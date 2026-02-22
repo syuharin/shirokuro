@@ -42,15 +42,6 @@ export function ParticipantList({ myState, participants }: ParticipantListProps)
 }
 
 function ParticipantCard({ peer, isSelf }: { peer: PeerState, isSelf?: boolean }) {
-  // 数値に応じて色を変える
-  const getScoreColor = (value: number) => {
-    if (value >= 80) return 'text-emerald-500';
-    if (value <= 20) return 'text-red-500';
-    if (value >= 55) return 'text-emerald-300';
-    if (value <= 45) return 'text-red-300';
-    return 'text-neutral-400';
-  };
-
   return (
     <div className={`flex items-center justify-between p-8 rounded-[2rem] border transition-all duration-500 shadow-sm ${isSelf ? 'bg-white border-black ring-2 ring-black ring-offset-4' : 'bg-neutral-50 border-neutral-100 hover:border-neutral-300'}`}>
       <div className="flex items-center gap-6">
@@ -60,7 +51,7 @@ function ParticipantCard({ peer, isSelf }: { peer: PeerState, isSelf?: boolean }
           <div className="text-[10px] text-neutral-300 font-black uppercase tracking-tighter mt-1">PEER: {peer.peerId.slice(-6)}</div>
         </div>
       </div>
-      <div className={`text-6xl font-black font-mono leading-none tabular-nums tracking-tighter ${getScoreColor(peer.value)}`}>
+      <div className="text-6xl font-black font-mono leading-none tabular-nums tracking-tighter text-black">
         {peer.value}
       </div>
     </div>

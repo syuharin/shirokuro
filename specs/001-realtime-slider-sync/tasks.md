@@ -93,6 +93,7 @@ description: "Task list for real-time slider synchronization and visualization i
 - [x] T024 [P] Capacity Verification: Connect with 10 tabs and confirm stability without significant degradation (SC-004)
 - [x] T031 Refine marker styling and animations in src/components/ParticipantPositionBar.tsx
 - [x] T032 Run quickstart.md validation for the new visualization component
+- [x] T033 Optimize synchronization frequency: Switch to commitment-based P2P broadcast for slider (T014 refinement)
 
 ---
 

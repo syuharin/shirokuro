@@ -185,7 +185,8 @@ export default function RoomPage() {
               
               <SliderComponent 
                 value={myState.value}
-                onChange={(val) => updateMyState({ value: val })}
+                onChange={(val) => updateMyState({ value: val }, false)}
+                onCommit={(val) => updateMyState({ value: val }, true)}
                 labelMin={labelMin}
                 labelMax={labelMax}
               />

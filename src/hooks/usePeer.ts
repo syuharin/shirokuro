@@ -59,20 +59,22 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
   }, [broadcast]);
 
   // Update Local State and Broadcast
-  const updateMyState = useCallback((newState: Partial<PeerState>) => {
+  const updateMyState = useCallback((newState: Partial<PeerState>, shouldBroadcast: boolean = true) => {
     setMyState((prev) => {
       const updated = { ...prev, ...newState, lastUpdated: Date.now() };
       
-      const payload: SyncUpdatePayload = {
-        type: 'SYNC_UPDATE',
-        payload: {
-          peerId: updated.peerId,
-          name: updated.name || 'Anonymous', // Fallback for broadcast
-          value: updated.value,
-        },
-      };
-      
-      broadcast(payload);
+      if (shouldBroadcast) {
+        const payload: SyncUpdatePayload = {
+          type: 'SYNC_UPDATE',
+          payload: {
+            peerId: updated.peerId,
+            name: updated.name || 'Anonymous', // Fallback for broadcast
+            value: updated.value,
+          },
+        };
+        
+        broadcast(payload);
+      }
       return updated;
     });
   }, [broadcast]);

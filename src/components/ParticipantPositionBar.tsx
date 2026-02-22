@@ -38,7 +38,7 @@ export function ParticipantPositionBar({ myState, participants }: ParticipantPos
     <div className="space-y-4">
       <div className="flex justify-between items-center px-1">
         <h3 className="text-sm font-black text-black flex items-center gap-2">
-          <div className="w-1 h-4 bg-emerald-500 rounded-full" />
+          <div className="w-1 h-4 bg-black rounded-full" />
           現在の分布（みんなの立ち位置）
         </h3>
         <div className="flex gap-4 text-[10px] font-black text-neutral-400">
@@ -111,19 +111,9 @@ function ParticipantMarker({
   
   const yOffset = calculateYOffset(offset);
 
-  // マーカーの色（バッジ形式に合わせる）
-  const getBadgeColors = (value: number) => {
-    if (isSelf) return 'bg-black text-white border-white shadow-xl ring-2 ring-black/5';
-    
-    if (value >= 80) return 'bg-emerald-50 text-emerald-600 border-emerald-100';
-    if (value <= 20) return 'bg-red-50 text-red-600 border-red-100';
-    if (value >= 55) return 'bg-emerald-50/50 text-emerald-500/80 border-emerald-50';
-    if (value <= 45) return 'bg-red-50/50 text-red-500/80 border-red-50';
-    
-    return 'bg-white text-neutral-500 border-neutral-200 shadow-sm';
-  };
-
-  const badgeStyles = getBadgeColors(peer.value);
+  const badgeStyles = isSelf 
+    ? 'bg-black text-white border-white shadow-xl ring-2 ring-black/5'
+    : 'bg-white text-neutral-500 border-neutral-200 shadow-sm';
 
   return (
     <div 
