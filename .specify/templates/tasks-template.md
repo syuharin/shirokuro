@@ -49,8 +49,9 @@ description: "Task list template for feature implementation"
 **Purpose**: Project initialization and basic structure
 
 - [ ] T001 Create project structure per implementation plan
-- [ ] T002 Initialize [language] project with [framework] dependencies
+- [ ] T002 Initialize [language] project with [framework] (Vercel/Next.js native)
 - [ ] T003 [P] Configure linting and formatting tools
+- [ ] T004 [CONSTITUTION] Verify zero-database, no-auth, and minimalist UI compliance
 
 ---
 

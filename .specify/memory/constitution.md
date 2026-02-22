@@ -1,50 +1,75 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report:
+- Version change: [CONSTITUTION_VERSION] → 1.0.0
+- List of modified principles: (Initial principles defined)
+  - I. Zero Database Policy: 外部・内部を問わずデータベース（SQL/NoSQL）を一切使用しない。
+  - II. No User Management: ログイン、サインアップ、アカウント作成機能は一切実装しない。
+  - III. Stateless Grouping: グループはURLのパスパラメータのみで識別し、サーバー側に状態を持たない。
+  - IV. Real-time P2P: 数値の同期はサーバーを介さないWebRTC（PeerJS推奨）によるP2P通信を基本とする。
+  - V. Vercel Native: Vercelの無料枠（Hobbyプラン）で完結し、追加費用が発生しない構成にする。
+  - VI. Minimalist UI: 0-100のスライダーと、他ユーザーの数値をリスト表示するだけの極めてシンプルな構成にする。
+- Added sections:
+  - Core Principles (I-VI)
+  - Deployment & Platform Constraints
+  - Testing & Verification Requirements
+- Removed sections: None
+- Templates requiring updates (✅ updated):
+  - ✅ .specify/templates/plan-template.md
+  - ✅ .specify/templates/spec-template.md
+  - ✅ .specify/templates/tasks-template.md
+- Follow-up TODOs: None
+-->
+
+# Shirokuro Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Zero Database Policy
+外部・内部を問わずデータベース（SQL/NoSQL）を一切使用しない。すべてのデータは揮発性（in-memory）または、URLパラメータを通じてのみ受け渡される。
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+**Rationale**: インフラの複雑さを排除し、メンテナンスフリーな構成を維持するため。
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### II. No User Management
+ログイン、サインアップ、アカウント作成機能は一切実装しない。ユーザー認証のためのセッション管理も行わない。
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+**Rationale**: 個人情報を保持せず、実装コストとセキュリティリスクを最小化するため。
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### III. Stateless Grouping
+グループはURLのパスパラメータ（例: `/groups/[groupId]`) のみで識別し、サーバー側に状態を持たない。共有リンクのURL自体がグループへのアクセスキーとなる。
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+**Rationale**: データベースなしで複数ユーザーによる共有空間を実現するため。
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### IV. Real-time P2P
+数値の同期はサーバーを介さないWebRTC（PeerJS推奨）によるP2P通信を基本とする。サーバーはシグナリングのみに利用し、データの保存・中継は行わない。
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+**Rationale**: 低遅延な同期を実現し、サーバーの負荷とストレージコストをゼロにするため。
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### V. Vercel Native
+Vercelの無料枠（Hobbyプラン）で完結し、追加費用が発生しない構成にする。外部のマネージドサービス（DB等）も無料枠を超えるものは一切使用しない。
+
+**Rationale**: 永続的な無料運用を保証するため。
+
+### VI. Minimalist UI
+0-100のスライダーと、他ユーザーの数値をリスト表示するだけの極めてシンプルな構成にする。過剰な装飾や複雑なページ遷移は排除する。
+
+**Rationale**: 実装の迅速さと、直感的な操作性を最優先するため。
+
+## Deployment & Platform Constraints
+
+Vercel Hobbyプランの制約内（Serverless Functionsのタイムアウト、帯域幅など）で動作するように設計する。
+サーバーレスなフロントエンドが中心となり、サーバーサイドの状態（State）は持たない。
+
+## Testing & Verification Requirements
+
+テストは主に以下の観点で行う。
+- P2P接続の確立と数値の同期が正常に行われるか（Browser automationなどによるシミュレーション）。
+- URLパラメータによるグループ識別が機能するか。
+- 外部DB等への依存が混入していないか。
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+本憲法はプロジェクトのすべての実装における最上位の判断基準とする。
+原則の変更または削除は、ガバナンスの大幅な見直しが必要であり、バージョンをメジャーアップデート（X.0.0）して記録する。
+すべてのプルリクエストは本憲法への準拠を確認し、違反がある場合は採用しない。
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-02-22 | **Last Amended**: 2026-02-22

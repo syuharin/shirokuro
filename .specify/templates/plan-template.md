@@ -31,7 +31,14 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- [ ] **Zero Database Policy**: Are we using *any* external/internal DB? (Must be NO)
+- [ ] **No User Management**: Are there logins or sessions? (Must be NO)
+- [ ] **Stateless Grouping**: Is state stored on the server for groups? (Must be NO)
+- [ ] **Real-time P2P**: Is PeerJS/WebRTC the primary sync method? (Must be YES)
+- [ ] **Vercel Native**: Does this fit in the Vercel Hobby plan? (Must be YES)
+- [ ] **Minimalist UI**: Is the UI simple (0-100 slider + list)? (Must be YES)
+
+[Document justifications for any intentional (temporary) deviations if allowed by governance]
 
 ## Project Structure
 

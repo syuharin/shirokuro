@@ -5,6 +5,15 @@
 **Status**: Draft  
 **Input**: User description: "$ARGUMENTS"
 
+## Constitution Alignment *(mandatory)*
+
+- **Zero Database Policy**: Confirm no external/internal DB is required for this feature.
+- **No User Management**: Verify no login/account creation logic is included.
+- **Stateless Grouping**: Confirm grouping is via URL path parameters only.
+- **Real-time P2P**: Verify numeric sync is via PeerJS/WebRTC.
+- **Vercel Native**: Ensure configuration fits within Vercel Hobby limits.
+- **Minimalist UI**: Confirm UI consists of a 0-100 slider and a list of other users' values.
+
 ## User Scenarios & Testing *(mandatory)*
 
 <!--
