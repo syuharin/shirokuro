@@ -11,10 +11,19 @@ export interface PeerState {
   lastUpdated?: number; // timestamp
 }
 
-export type PayloadType = 'SYNC_UPDATE' | 'INITIAL_PEER_LIST' | 'HEARTBEAT';
+export type PayloadType = 'SYNC_UPDATE' | 'INITIAL_PEER_LIST' | 'SYNC_TOPIC' | 'HEARTBEAT';
 
 export interface BasePayload {
   type: PayloadType;
+}
+
+export interface SyncTopicPayload extends BasePayload {
+  type: 'SYNC_TOPIC';
+  payload: {
+    topic: string;
+    labelMin: string;
+    labelMax: string;
+  };
 }
 
 export interface SyncUpdatePayload extends BasePayload {
@@ -38,4 +47,4 @@ export interface HeartbeatPayload extends BasePayload {
   payload: Record<string, never>; // Empty payload
 }
 
-export type P2PPayload = SyncUpdatePayload | InitialPeerListPayload | HeartbeatPayload;
+export type P2PPayload = SyncUpdatePayload | InitialPeerListPayload | SyncTopicPayload | HeartbeatPayload;

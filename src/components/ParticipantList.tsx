@@ -1,6 +1,7 @@
 "use client";
 
 import { PeerState } from "@/lib/types";
+import { Users } from "lucide-react";
 
 interface ParticipantListProps {
   myState: PeerState;
@@ -9,23 +10,30 @@ interface ParticipantListProps {
 
 export function ParticipantList({ myState, participants }: ParticipantListProps) {
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold flex items-center gap-2 text-neutral-200">
-        Participants ({participants.length + 1})
-      </h2>
+    <div className="space-y-8">
+      <div className="flex justify-between items-center">
+        <h2 className="text-3xl font-black flex items-center gap-4 text-black italic">
+          <Users className="w-8 h-8 not-italic" />
+          みんなの意見
+        </h2>
+        <div className="bg-black text-white px-4 py-1 rounded-full text-xs font-black">
+          {participants.length + 1}人 参加中
+        </div>
+      </div>
       
-      <div className="grid gap-3">
+      <div className="grid gap-4">
         {/* Myself */}
         <ParticipantCard peer={myState} isSelf />
         
         {/* Others */}
-        {participants.map((peer) => (
-          <ParticipantCard key={peer.peerId} peer={peer} />
-        ))}
-        
-        {participants.length === 0 && (
-          <div className="text-center py-8 text-neutral-500 border border-dashed border-neutral-800 rounded-lg">
-            Waiting for others to join...
+        {participants.length > 0 ? (
+          participants.map((peer) => (
+            <ParticipantCard key={peer.peerId} peer={peer} />
+          ))
+        ) : (
+          <div className="text-center py-20 text-neutral-400 border-2 border-dashed border-neutral-100 rounded-[2rem] bg-neutral-50/50">
+            <p className="font-black text-xl">まだ誰もいません</p>
+            <p className="font-bold text-sm mt-2 opacity-60">URLを共有して意見を聞いてみましょう</p>
           </div>
         )}
       </div>
@@ -34,16 +42,25 @@ export function ParticipantList({ myState, participants }: ParticipantListProps)
 }
 
 function ParticipantCard({ peer, isSelf }: { peer: PeerState, isSelf?: boolean }) {
+  // 数値に応じて色を変える
+  const getScoreColor = (value: number) => {
+    if (value >= 80) return 'text-emerald-500';
+    if (value <= 20) return 'text-red-500';
+    if (value >= 55) return 'text-emerald-300';
+    if (value <= 45) return 'text-red-300';
+    return 'text-neutral-400';
+  };
+
   return (
-    <div className={`flex items-center justify-between p-4 rounded-lg border ${isSelf ? 'bg-neutral-900 border-blue-900/50' : 'bg-neutral-900 border-neutral-800'}`}>
-      <div className="flex items-center gap-3">
-        <div className={`w-2 h-2 rounded-full ${isSelf ? 'bg-blue-500' : 'bg-green-500'}`} />
+    <div className={`flex items-center justify-between p-8 rounded-[2rem] border transition-all duration-500 shadow-sm ${isSelf ? 'bg-white border-black ring-2 ring-black ring-offset-4' : 'bg-neutral-50 border-neutral-100 hover:border-neutral-300'}`}>
+      <div className="flex items-center gap-6">
+        <div className={`w-4 h-4 rounded-full shadow-inner ${isSelf ? 'bg-black animate-pulse' : 'bg-neutral-200'}`} />
         <div>
-          <div className="font-medium text-neutral-200">{peer.name || 'Anonymous'} {isSelf && '(You)'}</div>
-          <div className="text-xs text-neutral-500 font-mono">{peer.peerId.slice(-6)}</div>
+          <div className="font-black text-2xl text-black leading-tight tracking-tighter">{peer.name || 'ゲスト'} {isSelf && '(あなた)'}</div>
+          <div className="text-[10px] text-neutral-300 font-black uppercase tracking-tighter mt-1">PEER: {peer.peerId.slice(-6)}</div>
         </div>
       </div>
-      <div className="text-2xl font-bold font-mono text-neutral-200">
+      <div className={`text-6xl font-black font-mono leading-none tabular-nums tracking-tighter ${getScoreColor(peer.value)}`}>
         {peer.value}
       </div>
     </div>

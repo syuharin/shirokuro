@@ -10,15 +10,16 @@ interface NameInputProps {
 
 export function NameInput({ value, onChange, disabled }: NameInputProps) {
   return (
-    <div className="space-y-2">
-      <label className="text-sm text-neutral-400 font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Display Name</label>
+    <div className="space-y-3">
+      <label className="text-sm font-black text-neutral-400 uppercase tracking-widest">表示名</label>
       <Input 
         value={value} 
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className="bg-neutral-950 border-neutral-700 text-neutral-100" 
-        placeholder="Enter your name"
+        className="bg-neutral-50 border-neutral-200 text-black font-bold h-12 rounded-xl focus-visible:ring-black" 
+        placeholder="名前を入力してください"
       />
+      <p className="text-xs text-neutral-400 font-medium">名前はサーバーに保存されません</p>
     </div>
   );
 }

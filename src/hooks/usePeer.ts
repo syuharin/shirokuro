@@ -2,13 +2,16 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import type { Peer, DataConnection } from 'peerjs';
-import { PeerState, P2PPayload, SyncUpdatePayload, InitialPeerListPayload } from '../lib/types';
+import { PeerState, P2PPayload, SyncUpdatePayload, InitialPeerListPayload, SyncTopicPayload } from '../lib/types';
 
 const PREFIX = 'shirokuro-'; 
 
 export function usePeer(roomId: string, initialName: string = 'Anonymous') {
   const [peerId, setPeerId] = useState<string | null>(null);
   const [isAnchor, setIsAnchor] = useState<boolean>(false);
+  const [topic, setTopic] = useState<string>('（お題を入力してください）');
+  const [labelMin, setLabelMin] = useState<string>('0');
+  const [labelMax, setLabelMax] = useState<string>('100');
   const [status, setStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
   
   const [myState, setMyState] = useState<PeerState>({
@@ -25,7 +28,14 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
   const connectionsRef = useRef<Map<string, DataConnection>>(new Map());
   
   const myStateRef = useRef(myState);
+  const topicRef = useRef(topic);
+  const labelMinRef = useRef(labelMin);
+  const labelMaxRef = useRef(labelMax);
+
   useEffect(() => { myStateRef.current = myState; }, [myState]);
+  useEffect(() => { topicRef.current = topic; }, [topic]);
+  useEffect(() => { labelMinRef.current = labelMin; }, [labelMin]);
+  useEffect(() => { labelMaxRef.current = labelMax; }, [labelMax]);
 
   // Broadcast to all connected peers
   const broadcast = useCallback((data: P2PPayload) => {
@@ -36,20 +46,21 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
     });
   }, []);
 
+  // Update Topic and Broadcast
+  const updateTopic = useCallback((newTopic: string, min: string, max: string) => {
+    setTopic(newTopic);
+    setLabelMin(min);
+    setLabelMax(max);
+    const payload: SyncTopicPayload = {
+      type: 'SYNC_TOPIC',
+      payload: { topic: newTopic, labelMin: min, labelMax: max },
+    };
+    broadcast(payload);
+  }, [broadcast]);
+
   // Update Local State and Broadcast
   const updateMyState = useCallback((newState: Partial<PeerState>) => {
     setMyState((prev) => {
-      // Apply default name if empty
-      let updatedName = newState.name !== undefined ? newState.name : prev.name;
-      if (updatedName.trim() === '') {
-        // Don't override local input state immediately to allow typing, 
-        // but for broadcast we might want to send 'Anonymous'.
-        // However, better UX is to allow empty in input but show 'Anonymous' in UI.
-        // Let's keep state as is, but UI rendering handles 'Anonymous'.
-        // But spec says "defaulting to Anonymous if empty".
-        // Let's send 'Anonymous' if empty string is provided.
-      }
-
       const updated = { ...prev, ...newState, lastUpdated: Date.now() };
       
       const payload: SyncUpdatePayload = {
@@ -85,6 +96,10 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
         }
         return [...prev, { peerId, name, value, isSelf: false, lastUpdated: Date.now() }];
       });
+    } else if (payload.type === 'SYNC_TOPIC') {
+      setTopic(payload.payload.topic);
+      setLabelMin(payload.payload.labelMin);
+      setLabelMax(payload.payload.labelMax);
     } else if (payload.type === 'INITIAL_PEER_LIST') {
       const peersToConnect = payload.payload.peers;
       peersToConnect.forEach((targetId) => {
@@ -107,6 +122,17 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
         },
       };
       conn.send(payload);
+
+      // Send the current topic and labels
+      const topicPayload: SyncTopicPayload = {
+        type: 'SYNC_TOPIC',
+        payload: { 
+          topic: topicRef.current,
+          labelMin: labelMinRef.current,
+          labelMax: labelMaxRef.current
+        },
+      };
+      conn.send(topicPayload);
 
       // If I am Anchor, send list of other peers to the new joiner
       if (isAnchor) {
@@ -213,6 +239,10 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
   return {
     peerId,
     isAnchor,
+    topic,
+    labelMin,
+    labelMax,
+    updateTopic,
     participants,
     myState,
     updateMyState,
