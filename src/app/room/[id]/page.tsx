@@ -12,7 +12,7 @@ import { Header } from "@/components/Header";
 
 export default function RoomPage() {
   const { id } = useParams();
-  const roomId = Array.isArray(id) ? id[0] : id;
+  const roomId = (Array.isArray(id) ? id[0] : id) ?? "";
 
   const { 
     participants, myState, updateMyState, 
