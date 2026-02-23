@@ -1,128 +1,134 @@
----
-
-description: "Task list for real-time slider synchronization and visualization in P2P rooms"
----
-
-# Tasks: Real-time slider synchronization and visualization
+# Tasks: Real-time Slider Sync (Interactive Distribution Bar)
 
 **Input**: Design documents from `/specs/001-realtime-slider-sync/`
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/p2p-payloads.md
 
-**Organization**: Tasks are grouped by user story to enable independent implementation and testing.
+**Tests**: P2P interaction tests are recommended via manual multi-tab testing as described in `quickstart.md`.
+
+**Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
+
+## Format: `[ID] [P?] [Story] Description`
+
+- **[P]**: Can run in parallel (different files, no dependencies)
+- **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
+- Include exact file paths in descriptions
+
+---
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-**Purpose**: Project initialization and basic structure
+**Purpose**: Project initialization and basic structure verification
 
-- [x] T001 Initialize Next.js (App Router) project with TypeScript at repository root
-- [x] T002 [P] Install dependencies: peerjs, lucide-react, clsx, tailwind-merge
-- [x] T003 [P] Initialize shadcn/ui and install Slider, Button, Input, and Card components
-- [x] T004 [CONSTITUTION] Verify zero-database, no-auth, and minimalist UI compliance in configuration
+- [X] T001 [CONSTITUTION] Verify zero-database, no-auth, and minimalist UI compliance in current implementation
+- [X] T002 [P] Verify `src/components/ui/slider.tsx` exists and is based on Radix UI Slider
+- [X] T003 [P] Create a backup of `src/components/ParticipantPositionBar.tsx` for reference during refactoring
+
+---
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-**Purpose**: Core infrastructure for P2P communication and routing
+**Purpose**: Core infrastructure and layout adjustments for the unified bar
 
-- [x] T005 [P] Implement URL utility for random room ID generation in src/lib/utils.ts
-- [x] T006 Implement base P2P connection logic (PeerJS initialization) in src/hooks/usePeer.ts
-- [x] T007 Implement mesh networking logic (lobby-anchor discovery) in src/hooks/usePeer.ts
-- [x] T008 [P] Define TypeScript interfaces for P2P payloads per contracts/p2p-payloads.md in src/lib/types.ts
+- [X] T004 [P] Ensure `src/lib/types.ts` contains `PeerState` and `RoomState` as defined in `data-model.md`
+- [X] T005 [P] Update `src/components/ui/slider.tsx` to export sub-components (Track, Range, Thumb) if needed for custom layout
+- [X] T006 [P] Prepare the layout in `src/app/room/[id]/page.tsx` by expanding the distribution bar container height to `h-48` for better visibility.
 
-## Phase 3: User Story 1 - Create and Share Room (Priority: P1) 🎯 MVP
+---
 
-**Goal**: Enable users to create a room and redirect to a unique URL.
+## Phase 3: User Story 2 - Real-time Slider Sync (Priority: P1) 🎯 MVP
 
-**Independent Test**: Click "Create Group" on home, verify redirect to `/room/[id]`, and ensure another tab can open the same URL.
+**Goal**: Integrate the user's slider directly into the distribution bar for direct manipulation.
 
-- [x] T009 [US1] Implement Homepage with "Create Group" button in src/app/page.tsx
-- [x] T010 [US1] Setup dynamic route for room pages in src/app/room/[id]/page.tsx
-- [x] T011 [US1] Implement basic Room layout with ID display in src/app/room/[id]/page.tsx
+**Independent Test**: Drag the "Self" marker on the distribution bar and verify it updates the numeric display and broadcasts to other tabs.
 
-**Checkpoint**: User Story 1 functional - Rooms can be created and shared via URL.
+### Implementation for User Story 2
 
-## Phase 4: User Story 2 - Real-time Slider Sync (Priority: P1) 🎯 MVP
+- [X] T007 [US2] Update `ParticipantPositionBar` props to accept `value`, `onChange`, and `onCommit` in `src/components/ParticipantPositionBar.tsx`
+- [X] T008 [US2] Refactor `ParticipantMarker` component to be used as a child of `SliderPrimitive.Thumb` in `src/components/ParticipantPositionBar.tsx`
+- [X] T009 [US2] Implement the `Radix Slider` structure within `ParticipantPositionBar` track in `src/components/ParticipantPositionBar.tsx`
+- [X] T010 [US2] Bind the `isSelf` marker to the `Slider.Thumb` while maintaining its `verticalOffset` logic in `src/components/ParticipantPositionBar.tsx`
+- [X] T011 [US2] Update `src/app/room/[id]/page.tsx` to pass `myState.value` and `updateMyState` callbacks to `ParticipantPositionBar`
+- [X] T012 [US2] Refactor `src/components/SliderComponent.tsx` to remove the redundant slider track, keeping only the large numeric display
+- [X] T013 [US2] Hide/Remove the duplicate slider control from the "My Controls" card in `src/app/room/[id]/page.tsx`
+- [X] T024 [US2] SC-004の検証：3人以上のユーザーが同じ値（例：全員50）に設定した場合に、垂直オフセットが正しく働き、名前バッジが重ならずに一覧できることを確認する。
 
-**Goal**: Synchronize slider values across all connected peers.
+**Checkpoint**: User Story 2 is functional. Direct manipulation of markers on the bar is possible and syncs.
 
-**Independent Test**: Move slider in Tab A, verify value updates in Tab B's list.
+---
 
-- [x] T012 [P] [US2] Create SliderComponent with 0-100 range in src/components/SliderComponent.tsx
-- [x] T013 [P] [US2] Create NameInput component for temporary display name in src/components/NameInput.tsx
-- [x] T014 [US2] Integrate usePeer hook with SliderComponent to broadcast SYNC_UPDATE in src/app/room/[id]/page.tsx
-- [x] T015 [US2] Implement message receiver for SYNC_UPDATE to update local participants state in src/hooks/usePeer.ts
+## Phase 4: User Story 1 - Create and Share Room (Priority: P1)
 
-**Checkpoint**: User Story 2 functional - Slider values synchronize in real-time between peers.
+**Goal**: Ensure room creation and sharing flow is consistent with the new UI.
 
-## Phase 5: User Story 3 - Participation Management (Priority: P2)
+**Independent Test**: Create a room, share the URL, and join from another tab. Verify both tabs see the interactive bar.
 
-**Goal**: Display active participants and handle join/leave events.
+### Implementation for User Story 1
 
-**Independent Test**: Join with a third tab, verify all tabs see 3 users. Close a tab, verify others see it removed.
+- [X] T014 [US1] Verify "Create Group" button on homepage correctly redirects to the room with the new UI layout
+- [X] T015 [P] [US1] Ensure `copyUrl` functionality in `src/app/room/[id]/page.tsx` remains accessible and visible
 
-- [x] T016 [P] [US3] Create ParticipantList component in src/components/ParticipantList.tsx
-- [x] T017 [US3] Implement INITIAL_PEER_LIST sync for new joiners in src/hooks/usePeer.ts
-- [x] T018 [US3] Handle WebRTC 'close' event to remove peers from state in src/hooks/usePeer.ts
-- [x] T019 [US3] Implement participant list display in src/app/room/[id]/page.tsx using ParticipantList component
+---
 
-**Checkpoint**: User Story 3 functional - Full participation list with real-time join/leave updates.
+## Phase 5: User Story 3 - Topic Synchronization (Priority: P1)
 
-## Phase 6: User Story 4 - Visual Position Bar (Priority: P1) 🎯 NEW
+**Goal**: Synchronize topic and labels, and display them on the interactive bar.
 
-**Goal**: Provide a shared horizontal bar where markers for all participants are displayed at their respective slider positions.
+**Independent Test**: Change the "Topic" or "Scale Labels" and verify they update on the distribution bar for all participants.
 
-**Independent Test**: Open multiple tabs on the same room URL, move the slider in one tab, and verify that the corresponding marker in the `ParticipantPositionBar` updates in all tabs instantly.
+### Implementation for User Story 3
 
-### Implementation for User Story 4
+- [X] T016 [US3] Update `ParticipantPositionBar` to display `labelMin` and `labelMax` at the ends of the bar in `src/components/ParticipantPositionBar.tsx`
+- [X] T017 [US3] Ensure topic updates from `TopicCard` correctly refresh the labels on the `ParticipantPositionBar` via props in `src/app/room/[id]/page.tsx`
 
-- [x] T026 [P] [US4] Create `ParticipantPositionBar.tsx` skeleton in src/components/ParticipantPositionBar.tsx
-- [x] T027 [US4] Implement marker rendering logic with absolute positioning based on `value` in src/components/ParticipantPositionBar.tsx
-- [x] T028 [US4] Add participant names and values on hover for markers in src/components/ParticipantPositionBar.tsx
-- [x] T029 [US4] Integrate `ParticipantPositionBar` above the `SliderComponent` in src/app/room/[id]/page.tsx
-- [x] T030 [US4] Implement marker collision handling (slight vertical offset) in src/components/ParticipantPositionBar.tsx
+---
 
-**Checkpoint**: User Story 4 functional - All participants' relative positions are visually represented on a single axis.
+## Phase 6: Polish & Cross-Cutting Concerns
 
-## Phase 7: Polish & Cross-Cutting Concerns
+**Purpose**: Visual improvements and validation
 
-**Purpose**: Final refinements and deployment
-
-- [x] T020 [P] Add responsive styling and "Copy URL" utility for easier sharing
-- [x] T021 [P] Implement "Anonymous" default name logic per FR-004
-- [x] T022 [P] Configure Vercel deployment settings in vercel.json (if needed)
-- [x] T023 [P] Performance Verification: Connect with 3+ tabs and visually confirm sync latency is under 500ms (SC-003)
-- [x] T024 [P] Capacity Verification: Connect with 10 tabs and confirm stability without significant degradation (SC-004)
-- [x] T031 Refine marker styling and animations in src/components/ParticipantPositionBar.tsx
-- [x] T032 Run quickstart.md validation for the new visualization component
-- [x] T033 Optimize synchronization frequency: Switch to commitment-based P2P broadcast for slider (T014 refinement)
+- [X] T018 [P] Enhance marker transition animations in `src/components/ParticipantPositionBar.tsx` using `transition: all 300ms ease-out` for smooth sliding.
+- [X] T019 [P] Optimize marker collision logic in `src/components/ParticipantPositionBar.tsx` ensuring at least `20px` vertical gap between overlapping badges.
+- [X] T020 [P] Test touch target sizes for the "Self" marker on mobile resolutions
+- [X] T021 Run `quickstart.md` validation scenarios to ensure 100% feature compliance
+- [X] T022 [US1] SC-002の検証：2つのタブでルームを開き、P2P接続が3秒以内に確立されることを確認する。
+- [X] T023 [US2] SC-003の検証：スライダーを動かした際、他方の画面に500ms以内で数値が反映されることを確認する。
 
 ---
 
 ## Dependencies & Execution Order
 
-1. **Foundational (Phase 2)** -> **User Story 4 (P1)**: The bar visualization depends on the existing P2P state (`participants` and `myState`).
-2. **User Story 4** can be implemented after Phase 5 is complete.
-3. **Polish (Phase 7)**: T031 and T032 follow the implementation of User Story 4.
+### Phase Dependencies
 
-## Parallel Opportunities
+- **Setup & Foundational (Phases 1-2)**: MUST be completed first to prepare the components.
+- **User Story 2 (Phase 3)**: The primary implementation of the requested feature.
+- **User Story 1 & 3 (Phases 4-5)**: Can be verified/refined in parallel once Story 2 is stable.
+- **Polish (Phase 6)**: Final refinement.
 
-- T026 (UI component skeleton) can start independently of integration tasks.
-- T031 (Styling) can be worked on as soon as T027 is done.
+### Parallel Opportunities
+
+- T002, T003, T004, T005, T006 can all be prepared in parallel.
+- Once the main refactor (T007-T010) is done, UI adjustments (T012, T013) and secondary story checks (T014-T017) can be parallelized.
 
 ---
 
-## Parallel Example: User Story 4
-
-```bash
-# Start the component development
-Task: "Create ParticipantPositionBar.tsx skeleton in src/components/ParticipantPositionBar.tsx"
-```
-
 ## Implementation Strategy
 
-### Incremental Delivery (Visual Bar)
+### MVP First (Integrated Slider)
 
-1. **Skeleton First**: Create the bar track and a static marker.
-2. **Dynamic Mapping**: Connect to `myState` and `participants` to move markers dynamically.
-3. **Integration**: Add to the room page to verify real-time updates.
-4. **Collision Handling**: Ensure multiple markers at the same position remain visible.
-5. **Final Polish**: Add hover names and smooth transitions.
+1. Complete Setup and Foundational tasks.
+2. Focus on `src/components/ParticipantPositionBar.tsx` refactor to make it interactive.
+3. Update `src/app/room/[id]/page.tsx` to connect the P2P state to the new interactive bar.
+4. **VALIDATE**: Open two tabs, drag the marker in one, and see it move in the other.
+
+### Incremental Delivery
+
+1. **Iteration 1**: Interactive Bar working (replacing the old bar functionality).
+2. **Iteration 2**: Remove redundant separate slider, clean up "My Controls" area.
+3. **Iteration 3**: Label sync and visual polish.
+
+---
+
+## Notes
+
+- **Collision Logic**: Ensure that making the marker a `Slider.Thumb` doesn't break the `verticalOffset` calculation. The `Thumb` is absolutely positioned by Radix, but we can apply `marginTop` or a nested transform for the vertical offset.
+- **Touch Support**: Radix UI Slider provides excellent touch support, which should be preserved.

@@ -60,8 +60,13 @@ Sent by the "Anchor" to a newly joined peer.
 
 ## UI Contracts (Client-side Only)
 The frontend components must adhere to the following data-flow:
-- `SliderComponent`: Emits `onValueCommit` events (from `shadcn/ui` slider) to the P2P broadcast manager via `usePeer`.
+- `InteractiveParticipantPositionBar`: (REPLACED `ParticipantPositionBar` and partially `SliderComponent`)
+  - Displays all participants as markers.
+  - Acts as a **Radix UI Slider** where the `isSelf` marker is the `Thumb`.
+  - Emits `onValueChange` for real-time local updates.
+  - Emits `onValueCommit` (from Radix Slider) to the P2P broadcast manager via `usePeer`.
+- `SliderComponent`: (DEPRECATED/SECONDARY)
+  - Acts as a redundant or fallback control, potentially only showing the large numeric display now.
 - `NameInput`: Emits `onChange` events to the P2P broadcast manager via `usePeer`.
 - `ParticipantList`: Subscribes to the `participants` array and `myState` from `usePeer`.
-- `ParticipantPositionBar`: Subscribes to the `participants` array and `myState` from `usePeer`.
 - `TopicCard`: Subscribes to `topic`, `labelMin`, `labelMax` and `updateTopic` from `usePeer`.

@@ -11,6 +11,13 @@ export interface PeerState {
   lastUpdated?: number; // timestamp
 }
 
+export interface RoomState {
+  roomId: RoomId;
+  topic: string;
+  labelMin: string;
+  labelMax: string;
+}
+
 export type PayloadType = 'SYNC_UPDATE' | 'INITIAL_PEER_LIST' | 'SYNC_TOPIC' | 'HEARTBEAT';
 
 export interface BasePayload {

@@ -36,28 +36,62 @@ function Slider({
       )}
       {...props}
     >
-      <SliderPrimitive.Track
-        data-slot="slider-track"
-        className={cn(
-          "bg-muted relative grow overflow-hidden rounded-full data-[orientation=horizontal]:h-1.5 data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1.5"
-        )}
-      >
-        <SliderPrimitive.Range
-          data-slot="slider-range"
-          className={cn(
-            "bg-primary absolute data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full"
-          )}
-        />
-      </SliderPrimitive.Track>
+      <SliderTrack>
+        <SliderRange />
+      </SliderTrack>
       {Array.from({ length: _values.length }, (_, index) => (
-        <SliderPrimitive.Thumb
-          data-slot="slider-thumb"
-          key={index}
-          className="border-primary ring-ring/50 block size-4 shrink-0 rounded-full border bg-white shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
-        />
+        <SliderThumb key={index} />
       ))}
     </SliderPrimitive.Root>
   )
 }
 
-export { Slider }
+function SliderTrack({
+  className,
+  ...props
+}: React.ComponentProps<typeof SliderPrimitive.Track>) {
+  return (
+    <SliderPrimitive.Track
+      data-slot="slider-track"
+      className={cn(
+        "bg-muted relative grow overflow-hidden rounded-full data-[orientation=horizontal]:h-1.5 data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1.5",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function SliderRange({
+  className,
+  ...props
+}: React.ComponentProps<typeof SliderPrimitive.Range>) {
+  return (
+    <SliderPrimitive.Range
+      data-slot="slider-range"
+      className={cn(
+        "bg-primary absolute data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function SliderThumb({
+  className,
+  ...props
+}: React.ComponentProps<typeof SliderPrimitive.Thumb>) {
+  return (
+    <SliderPrimitive.Thumb
+      data-slot="slider-thumb"
+      className={cn(
+        "border-primary ring-ring/50 block size-4 shrink-0 rounded-full border bg-white shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export { Slider, SliderTrack, SliderRange, SliderThumb }

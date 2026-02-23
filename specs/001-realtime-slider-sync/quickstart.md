@@ -1,36 +1,32 @@
-# Quickstart: Implementing Slider Sync
+# Quickstart: Real-time Slider Sync
 
-## Steps to Implement
+## 🚀 Overview
+The application is a pure P2P real-time slider sync platform. Users can create a room, share the URL, and interact on a distribution bar where their position is visible to everyone instantly.
 
-1. **Setup PeerJS**:
-   - Install `peerjs`.
-   - Create the `usePeer` hook (`src/hooks/usePeer.ts`) to manage WebRTC connections.
+## 🛠 Prerequisites
+- **Node.js**: 18.x or later
+- **Package Manager**: npm or yarn
+- **PeerJS Server**: Default (Public)
 
-2. **Core Components**:
-   - `NameInput.tsx`: Input field for the display name.
-   - `SliderComponent.tsx`: Shadcn/UI-based slider (0-100).
-   - `ParticipantList.tsx`: Numeric list of participants and their values.
-   - `ParticipantPositionBar.tsx`: Visual distribution map with collision handling.
+## 📦 Installation
+```bash
+npm install
+```
 
-3. **Room Page Implementation**:
-   - Path: `src/app/room/[id]/page.tsx`.
-   - Use the `usePeer` hook to synchronize state.
-   - Handle "Topic" editing and synchronization.
+## 🏃 Local Development
+```bash
+npm run dev
+```
+Open `http://localhost:3000`.
 
-4. **Home Page Implementation**:
-   - Path: `src/app/page.tsx`.
-   - Add a "Create Group" button that redirects to a random `/room/[id]`.
+## 🧪 P2P Testing (Simulating Multiple Users)
+To test P2P locally:
+1. Open the app in two different browser windows or incognito mode.
+2. In Window A, click "Create Group" (or similar URL `/room/[id]`).
+3. Copy the URL from Window A and paste it into Window B.
+4. Name both users and observe real-time marker updates on the `InteractiveParticipantPositionBar`.
 
-## How to Test
-
-1. **Simulate multiple users**:
-   - Open the application in two or more browser tabs or different browsers (Chrome/Firefox).
-   - Use the same room URL (e.g., `http://localhost:3000/room/abcd-1234`).
-2. **Verify Name and Slider Sync**:
-   - Change the name in one tab; it should update on others.
-   - Adjust the slider and release; the value should update on others.
-3. **Verify Topic Sync**:
-   - Click "Edit Topic" and change the title and labels.
-   - Save and verify all tabs show the new topic and labels.
-4. **Verify Distribution Map**:
-   - Adjust multiple sliders to the same value and see markers stack vertically.
+## 📁 Key File Locations
+- **P2P Logic**: `src/hooks/usePeer.ts`
+- **Main Interaction Bar**: `src/components/ParticipantPositionBar.tsx`
+- **Room Entry Point**: `src/app/room/[id]/page.tsx`

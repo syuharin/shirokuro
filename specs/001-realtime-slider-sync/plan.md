@@ -1,30 +1,38 @@
-# Implementation Plan: Real-time slider synchronization in P2P rooms
+# Implementation Plan: [FEATURE]
 
-**Branch**: `001-realtime-slider-sync` | **Date**: 2026-02-22 | **Spec**: [specs/001-realtime-slider-sync/spec.md]
+**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
+**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+
+**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
 
 ## Summary
-Implement a serverless real-time synchronization application using PeerJS for P2P communication. The application allows users to join a room via URL, share their display name, and synchronize a slider value (0-100) across all participants. It includes a "Topic" system to define the context of the slider.
+
+Currently, the user's slider control and the distribution bar (showing everyone's positions) are separate components. This requires the user to look at two different tracks. The goal is to integrate the user's slider functionality directly into the distribution bar, making the "Self" marker interactive. This creates a more intuitive and direct manipulation interface where the user drags their own marker along the same axis where others are displayed.
 
 ## Technical Context
 
-**Language/Version**: TypeScript / Next.js 15 (App Router)  
-**Primary Dependencies**: PeerJS, Lucide React, Shadcn/UI (Tailwind CSS)  
-**Storage**: N/A (Transient P2P only)  
-**Testing**: Vitest (Recommended for logic), Playwright (Recommended for E2E)  
-**Target Platform**: Vercel (Hobby Plan)
-**Project Type**: Web Application (Client-side focus)  
-**Performance Goals**: <500ms sync latency, up to 10 concurrent users.  
-**Constraints**: No server-side persistence, WebRTC-based connectivity.  
-**Scale/Scope**: Small-scale collaborative tool.
+**Language/Version**: TypeScript / Next.js 14+ (App Router)
+**Primary Dependencies**: React, Tailwind CSS, Radix UI (Slider), PeerJS, Lucide React
+**Storage**: N/A (Stateless/P2P)
+**Testing**: Vitest / Playwright (for P2P simulation)
+**Target Platform**: Vercel (Hobby)
+**Project Type**: Web Application
+**Performance Goals**: <100ms UI latency, <500ms P2P broadcast latency
+**Constraints**: Must work on mobile/touch, No server-side state
+**Scale/Scope**: Up to 10-15 concurrent peers per room
 
 ## Constitution Check
 
-- [x] **Zero Database Policy**: No database used. (YES)
-- [x] **No User Management**: No logins or persistent sessions. (YES)
-- [x] **Stateless Grouping**: Grouping is handled by room IDs in the URL. (YES)
-- [x] **Real-time P2P**: PeerJS used for WebRTC sync. (YES)
-- [x] **Vercel Native**: Fully client-side logic compatible with Vercel. (YES)
-- [x] **Minimalist UI**: Clean, focus-driven UI. (YES)
+*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+
+- [x] **Zero Database Policy**: Are we using *any* external/internal DB? (NO)
+- [x] **No User Management**: Are there logins or sessions? (NO)
+- [x] **Stateless Grouping**: Is state stored on the server for groups? (NO)
+- [x] **Real-time P2P**: Is PeerJS/WebRTC the primary sync method? (YES)
+- [x] **Vercel Native**: Does this fit in the Vercel Hobby plan? (YES)
+- [x] **Minimalist UI**: Is the UI simple (0-100 slider + list)? (YES)
+
+[Document justifications for any intentional (temporary) deviations if allowed by governance]
 
 ## Project Structure
 
@@ -32,35 +40,46 @@ Implement a serverless real-time synchronization application using PeerJS for P2
 
 ```text
 specs/001-realtime-slider-sync/
-├── spec.md              # Feature Specification
 ├── plan.md              # This file
-├── research.md          # Technical decisions
-├── data-model.md        # State and component models
-├── quickstart.md        # Implementation steps
-├── contracts/           # P2P Payload definitions
-└── checklists/          # Requirements validation
+├── research.md          # Phase 0 output (Draggable UI integration)
+├── data-model.md        # Phase 1 output (PeerState/RoomState)
+├── quickstart.md        # Phase 1 output (Setup & P2P Testing)
+├── contracts/           
+│   └── p2p-payloads.md  # Phase 1 output (P2P Contract & UI Contract)
+└── tasks.md             # Phase 2 output (Next step)
 ```
 
-### Source Code
+### Source Code (repository root)
 
 ```text
 src/
 ├── app/
-│   ├── page.tsx               # Homepage (Create Group)
-│   └── room/[id]/page.tsx     # Room Page (Main UI)
+│   └── room/
+│       └── [id]/
+│           └── page.tsx        # Room Entry Point (Layout updates)
 ├── components/
-│   ├── NameInput.tsx          # Name editor
-│   ├── ParticipantList.tsx    # Numeric list of participants
-│   ├── ParticipantPositionBar.tsx # Visual distribution map
-│   ├── SliderComponent.tsx    # Slider input
-│   └── ui/                    # Shadcn base components
+│   ├── ParticipantPositionBar.tsx # REFACTOR: Interactive Distribution Bar
+│   ├── SliderComponent.tsx        # DEPRECATE/REFACTOR: Simplified display
+│   └── ui/
+│       └── slider.tsx             # Radix Slider Primitive
 ├── hooks/
-│   └── usePeer.ts             # Core P2P orchestration hook
-├── lib/
-│   ├── types.ts               # Shared TypeScript types
-│   └── utils.ts               # Utility functions (Room ID gen)
+│   └── usePeer.ts                 # P2P Logic
+└── lib/
+    └── types.ts                   # Type Definitions
 ```
+
+**Structure Decision**: Standard Next.js structure. Refactoring existing components in `src/components/`.
 
 ## Complexity Tracking
 
-*No violations to track.*
+> **Fill ONLY if Constitution Check has violations that must be justified**
+
+| Violation | Why Needed | Simpler Alternative Rejected Because |
+|-----------|------------|-------------------------------------|
+| (None)    |            |                                     |
+
+## Status Update
+
+- **Phase 0 (Outline & Research)**: COMPLETE (research.md generated)
+- **Phase 1 (Design & Contracts)**: COMPLETE (data-model.md, contracts/, quickstart.md, agent-specific file updated)
+- **Next Step**: Run `/speckit.tasks` to break this down into implementation steps.

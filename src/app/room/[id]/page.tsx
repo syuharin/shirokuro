@@ -161,10 +161,15 @@ export default function RoomPage() {
         </Card>
 
         {/* Distribution Map - Moved here for better visibility */}
-        <div className="bg-white p-6 rounded-3xl border border-neutral-200 shadow-sm">
+        <div className="bg-white p-6 rounded-3xl border border-neutral-200 shadow-sm min-h-[12rem] flex items-center">
           <ParticipantPositionBar 
             myState={myState}
             participants={participants}
+            value={myState.value}
+            onChange={(val) => updateMyState({ value: val }, false)}
+            onCommit={(val) => updateMyState({ value: val }, true)}
+            labelMin={labelMin}
+            labelMax={labelMax}
           />
         </div>
 
@@ -185,8 +190,6 @@ export default function RoomPage() {
               
               <SliderComponent 
                 value={myState.value}
-                onChange={(val) => updateMyState({ value: val }, false)}
-                onCommit={(val) => updateMyState({ value: val }, true)}
                 labelMin={labelMin}
                 labelMax={labelMax}
               />
