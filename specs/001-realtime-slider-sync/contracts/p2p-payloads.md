@@ -60,13 +60,16 @@ Sent by the "Anchor" to a newly joined peer.
 
 ## UI Contracts (Client-side Only)
 The frontend components must adhere to the following data-flow:
-- `InteractiveParticipantPositionBar`: (REPLACED `ParticipantPositionBar` and partially `SliderComponent`)
+- `Header`: (NEW)
+  - Displays room info and connection status.
+  - Hosts the `NameInput` for the current user.
+  - Hosts the "Share URL" button.
+- `InteractiveParticipantPositionBar`:
   - Displays all participants as markers.
   - Acts as a **Radix UI Slider** where the `isSelf` marker is the `Thumb`.
+  - Displays the current user's numeric value in its own header section.
   - Emits `onValueChange` for real-time local updates.
   - Emits `onValueCommit` (from Radix Slider) to the P2P broadcast manager via `usePeer`.
-- `SliderComponent`: (DEPRECATED/SECONDARY)
-  - Acts as a redundant or fallback control, potentially only showing the large numeric display now.
-- `NameInput`: Emits `onChange` events to the P2P broadcast manager via `usePeer`.
-- `ParticipantList`: Subscribes to the `participants` array and `myState` from `usePeer`.
 - `TopicCard`: Subscribes to `topic`, `labelMin`, `labelMax` and `updateTopic` from `usePeer`.
+- `ParticipantList`: (DEPRECATED from main view)
+  - May be kept as a background utility or optional detailed view.

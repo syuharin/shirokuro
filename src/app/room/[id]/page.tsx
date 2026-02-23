@@ -3,14 +3,12 @@
 import { usePeer } from "@/hooks/usePeer";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Copy, Wifi, Edit3, Check } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Edit3, Check } from "lucide-react";
 import { useState } from "react";
-import { SliderComponent } from "@/components/SliderComponent";
-import { NameInput } from "@/components/NameInput";
-import { ParticipantList } from "@/components/ParticipantList";
 import { ParticipantPositionBar } from "@/components/ParticipantPositionBar";
 import { Input } from "@/components/ui/input";
+import { Header } from "@/components/Header";
 
 export default function RoomPage() {
   const { id } = useParams();
@@ -21,17 +19,10 @@ export default function RoomPage() {
     topic, labelMin, labelMax, updateTopic, status 
   } = usePeer(roomId, "ゲスト");
 
-  const [copied, setCopied] = useState(false);
   const [isEditingTopic, setIsEditingTopic] = useState(false);
   const [tempTopic, setTempTopic] = useState(topic);
   const [tempMin, setTempMin] = useState(labelMin);
   const [tempMax, setTempMax] = useState(labelMax);
-
-  const copyUrl = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const saveTopic = () => {
     updateTopic(tempTopic, tempMin, tempMax);
@@ -57,24 +48,19 @@ export default function RoomPage() {
 
   return (
     <div className="min-h-screen bg-neutral-50 text-neutral-900 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="max-w-4xl mx-auto space-y-6">
         
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-black flex items-center gap-3 text-black">
-              <Wifi className={`w-8 h-8 ${status === 'connected' ? 'text-emerald-500' : 'text-amber-500'} animate-pulse`} />
-              ルーム: <span className="font-mono text-neutral-400 select-all">{roomId}</span>
-            </h1>
-          </div>
-          <Button variant="default" size="lg" onClick={copyUrl} className="gap-2 bg-black text-white hover:bg-neutral-800 rounded-xl font-bold shadow-md">
-            {copied ? "コピーしました！" : "URLを共有する"} <Copy className="w-5 h-5" />
-          </Button>
-        </div>
+        {/* Unified Header */}
+        <Header 
+          roomId={roomId}
+          name={myState.name}
+          onNameChange={(val) => updateMyState({ name: val })}
+          connectionStatus={status}
+        />
 
-        {/* Topic Card */}
-        <Card className="bg-white border-black border-2 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-2xl overflow-hidden">
-          <CardContent className="p-8 space-y-6">
+        {/* Topic Card (Primary Header Element) */}
+        <Card className="bg-white border-black border-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-2xl overflow-hidden">
+          <CardContent className="p-6 md:p-8 space-y-6">
             <div className="flex justify-between items-start">
               <div className="text-xs font-black text-neutral-400 uppercase tracking-widest">今日のお題</div>
               {!isEditingTopic && (
@@ -89,7 +75,7 @@ export default function RoomPage() {
                   }} 
                   className="h-8 gap-1 font-bold text-neutral-400 hover:text-black"
                 >
-                  <Edit3 className="w-4 h-4" /> お題を編集
+                  <Edit3 className="w-4 h-4" /> 編集
                 </Button>
               )}
             </div>
@@ -139,29 +125,16 @@ export default function RoomPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="text-4xl md:text-5xl font-black text-black leading-tight break-words">
+                <div className="text-3xl md:text-5xl font-black text-black leading-tight break-words">
                   {topic}
-                </div>
-                <div className="flex justify-between items-center bg-neutral-50 p-4 rounded-xl border border-neutral-100">
-                  <div className="text-center">
-                    <div className="text-[10px] font-black text-neutral-400">0 の意味</div>
-                    <div className="font-black text-neutral-600">{labelMin}</div>
-                  </div>
-                  <div className="h-px flex-1 bg-neutral-200 mx-8 relative">
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-neutral-200 text-[10px] px-2 py-0.5 rounded-full text-white font-black">SCALE</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-[10px] font-black text-neutral-400">100 の意味</div>
-                    <div className="font-black text-neutral-600">{labelMax}</div>
-                  </div>
                 </div>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Distribution Map - Moved here for better visibility */}
-        <div className="bg-white p-6 rounded-3xl border border-neutral-200 shadow-sm min-h-[12rem] flex items-center">
+        {/* Integrated Distribution Bar (Full Width Content) */}
+        <div className="bg-white p-6 md:p-8 rounded-3xl border border-neutral-200 shadow-lg min-h-[24rem] flex flex-col justify-center gap-4">
           <ParticipantPositionBar 
             myState={myState}
             participants={participants}
@@ -171,40 +144,6 @@ export default function RoomPage() {
             labelMin={labelMin}
             labelMax={labelMax}
           />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-          {/* My Controls */}
-          <Card className="md:col-span-5 bg-white border-neutral-200 shadow-lg rounded-3xl overflow-hidden">
-            <CardHeader className="bg-neutral-50 border-b border-neutral-100 p-6">
-              <CardTitle className="text-xl font-black text-black flex items-center gap-3">
-                <span className="w-2 h-6 bg-black rounded-full" />
-                あなたの意見
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-8 p-8">
-              <NameInput 
-                value={myState.name}
-                onChange={(val) => updateMyState({ name: val })}
-              />
-              
-              <SliderComponent 
-                value={myState.value}
-                labelMin={labelMin}
-                labelMax={labelMax}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Participants List */}
-          <div className="md:col-span-7">
-            <div className="bg-white p-8 rounded-3xl border border-neutral-200 shadow-lg">
-              <ParticipantList 
-                myState={myState} 
-                participants={participants} 
-              />
-            </div>
-          </div>
         </div>
 
       </div>

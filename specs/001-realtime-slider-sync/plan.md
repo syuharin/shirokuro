@@ -1,22 +1,22 @@
-# Implementation Plan: 001-realtime-slider-sync
+# Implementation Plan: Layout Refinement (Minimalist Integrated UI)
 
-**Branch**: `001-realtime-slider-sync` | **Date**: 2026-02-22 | **Spec**: `/specs/001-realtime-slider-sync/spec.md`
+**Branch**: `001-realtime-slider-sync` | **Date**: 2026-02-23 | **Spec**: `/specs/001-realtime-slider-sync/spec.md`
 
 ## Summary
 
-This update modifies the interactive slider (ParticipantPositionBar) to enforce a step increment of 5. Instead of free-form 0-100 values (step 1), the slider will snap to multiples of 5 (0, 5, 10, ... 100). This applies to the user's own interactions and ensures consistency across the room.
+Refine the application layout to move away from heavy "Your Opinion" and "Everyone's Opinion" cards. The goal is to focus the UI on the Topic and the Interactive Distribution Bar. The display name input will be moved from the main content area to a more appropriate location (e.g., Header or a small Floating Action Button/Popover).
 
 ## Technical Context
 
 **Language/Version**: TypeScript / Next.js 16+ (App Router)
-**Primary Dependencies**: React 19, Radix UI (Slider), PeerJS
+**Primary Dependencies**: React 19, Tailwind CSS, Radix UI (Slider, Popover/Dialog), PeerJS
 **Storage**: N/A (Stateless P2P)
 **Testing**: Manual / E2E (Multi-tab)
 **Target Platform**: Vercel
 **Project Type**: Web Application
-**Performance Goals**: Instant snapping and broadcast
-**Constraints**: Snapping must be enforced on both UI and broadcast value
-**Scale/Scope**: Single component modification + verify P2P broadcast
+**Performance Goals**: Instant UI response
+**Constraints**: Keep minimalist aesthetic (Shirokuro Constitution)
+**Scale/Scope**: Refactoring `RoomPage` and extracting components.
 
 ## Constitution Check
 
@@ -48,16 +48,20 @@ specs/001-realtime-slider-sync/
 
 ```text
 src/
+├── app/
+│   └── room/
+│       └── [id]/
+│           └── page.tsx        # TARGET: Main layout refactor
 ├── components/
-│   ├── ParticipantPositionBar.tsx # TARGET: Modify slider step
-│   └── SliderComponent.tsx        # TARGET: Verify numeric display sync
-└── app/
-    └── room/
-        └── [id]/
-            └── page.tsx           # Entry point
+│   ├── Header.tsx              # NEW: Move name input here
+│   ├── ParticipantPositionBar.tsx # REFINEMENT: Integrate numeric displays?
+│   ├── ParticipantList.tsx     # REFINEMENT: Smaller, compact list?
+│   └── NameInput.tsx           # REFINEMENT: Style for header usage
+└── lib/
+    └── types.ts                # PeerState
 ```
 
-**Structure Decision**: Modify existing components in place as this is a refinement of an existing feature.
+**Structure Decision**: Extract a `Header` component to host metadata and user settings (name). Simplify the `RoomPage` to focus on the Topic and Distribution Bar.
 
 ## Complexity Tracking
 

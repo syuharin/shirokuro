@@ -60,18 +60,14 @@ export function ParticipantPositionBar({
       <div className="flex justify-between items-center px-1">
         <h3 className="text-sm font-black text-black flex items-center gap-2">
           <div className="w-1 h-4 bg-black rounded-full" />
-          現在の分布（みんなの立ち位置）
+          現在の分布
         </h3>
-        <div className="flex gap-4 text-[10px] font-black text-neutral-400">
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-1.5 rounded-full bg-black" />
-            <span>あなた</span>
+        
+        {isInteractive && (
+          <div className="text-5xl font-black font-mono text-black leading-none tracking-tighter tabular-nums opacity-100">
+            {Math.round(value)}
           </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-1.5 rounded-full bg-neutral-200" />
-            <span>他の人</span>
-          </div>
-        </div>
+        )}
       </div>
       
       {/* Track Container */}

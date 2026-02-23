@@ -1,27 +1,41 @@
-# Research: Slider Step Increment Change
+# Research: Layout Refinement & Name Input Placement
 
 ## Problem Statement
-The current slider allows for single-unit increments (0-100), but for some contexts, a broader, discrete step (like 5) provides better alignment and clearer choices.
+The current UI has large cards for "Your Opinion" and "Everyone's Opinion," which feel bulky and redundant since the interactive slider is already part of the distribution bar. The name input is also tied to one of these large cards.
 
 ## Findings
 
-### 1. Radix UI Slider `step` Property
-Radix UI's Slider primitive natively supports a `step` prop. Setting this to 5 will automatically snap the UI interaction to multiples of 5.
+### 1. Name Input Placement
+- **Decision**: Move the name input to the **Header**.
+- **Rationale**: The display name is a "session identity" rather than "data input" related to the current topic. Placing it in the header follows common patterns for collaborative tools (e.g., Figma, Google Docs avatars).
+- **Implementation**: Use a small, editable name badge in the header or a simple input field next to the "Share URL" button.
 
-### 2. Broadcast Value Sync
-While the UI snaps, we should ensure the broadcast payload (`SYNC_UPDATE`) sends the stepped value. Since the UI state is controlled by the slider, `onValueChange` and `onValueCommit` will already receive the snapped value.
+### 2. Streamlining "Your Opinion"
+- **Decision**: Remove the "Your Opinion" card.
+- **Rationale**: The slider is already in the distribution bar. The large numeric display (currently in `SliderComponent`) can be integrated into the distribution bar's header or as a floating overlay near the "Self" marker.
+- **Alternative**: Keep a very minimal "Current Value" display somewhere on the page, but not as a large card.
 
-### 3. Display Consistency
-The `SliderComponent` (which shows the large numeric display) currently uses `Math.round(value)`. With a step of 5, it will display 0, 5, 10, etc., without further rounding logic needed, provided the incoming state is already snapped.
+### 3. Streamlining "Everyone's Opinion"
+- **Decision**: Remove the separate "Participants List" card.
+- **Rationale**: The distribution bar already shows everyone's relative position.
+- **Improvement**: Make the distribution bar slightly taller and ensure name badges are clear. If a list is still needed for accessibility or precise reading, make it a compact, collapsible list or a side drawer.
 
 ## Decisions
 
-### Decision: Implement `step={5}` in `ParticipantPositionBar.tsx`
-- Rationale: Direct manipulation of the slider should reflect the user's intent to use discrete steps.
-- Alternatives: Manual snapping logic in the state update function was considered but rejected in favor of the native component property for better UX (UI feedback during drag).
+### Decision: Integrated Header
+- The header will now contain:
+  - Room ID
+  - Current User's Name (Editable)
+  - Share URL Button
+  - Connection Status
 
-### Decision: No server-side validation needed
-- Rationale: Since the app is P2P and uses the Shirokuro Constitution (no DB/server state), client-side snapping is sufficient for the intended use case.
+### Decision: Focused Main Area
+- The main content area will only contain:
+  - Topic Card (Top)
+  - Interactive Distribution Bar (Middle/Bottom)
+
+### Decision: Numeric Display Refinement
+- Move the large "Your Value" number to the interactive bar's own header section to keep context unified.
 
 ## Summary
-The change is a targeted modification of the `step` prop in the `Radix Slider` primitive within the `ParticipantPositionBar` component.
+The UI will shift from a "Dashboard of Cards" to a "Unified Workspace" aesthetic, maximizing the space for the distribution visualization.
