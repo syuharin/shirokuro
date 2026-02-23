@@ -1,76 +1,95 @@
-# Tasks: Layout Refinement (Minimalist Integrated UI)
+# Tasks: QR Code Sharing Support
 
 **Input**: Design documents from `/specs/001-realtime-slider-sync/`
-**Prerequisites**: plan.md, spec.md, research.md, contracts/p2p-payloads.md
+**Prerequisites**: plan.md, spec.md, research.md, data-model.md
 
-**Tests**: Manual multi-tab verification as described in `quickstart.md`.
+**Tests**: Manual verification on desktop and mobile as specified in quickstart.md.
 
-**Organization**: Tasks are grouped by user story to enable independent implementation and testing.
+**Organization**: Tasks are grouped by user story. US1-US3 are completed foundational work; US4 is the current implementation target.
 
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
-- **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
+- **[Story]**: Which user story this task belongs to (US1, US2, US3, US4)
 - Include exact file paths in descriptions
-
----
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-**Purpose**: Verify compliance and prepare environment.
+**Purpose**: Project initialization and dependency management
 
-- [X] T001 [CONSTITUTION] Verify zero-database and minimalist UI compliance in `src/`
-
----
-
-## Phase 2: Foundational (Component Preparation)
-
-**Purpose**: Create or refactor components needed for the new layout.
-
-- [X] T002 [P] Refactor `NameInput.tsx` to support a compact, borderless style suitable for header usage in `src/components/NameInput.tsx`
-- [X] T003 [P] Create a basic `Header.tsx` component. Must stack on mobile (Room ID / Name & Button) and spread on desktop (Row) in `src/components/Header.tsx`
+- [x] T001 Create project structure per implementation plan
+- [x] T002 Initialize Next.js 16 project with PeerJS and Tailwind CSS
+- [x] T003 Install `react-qr-code` dependency for QR generation
+- [x] T004 Install `@radix-ui/react-popover` for the share menu UI
+- [x] T005 [CONSTITUTION] Verify zero-database and P2P sync compliance
 
 ---
 
-## Phase 3: User Story 2 & 3 - Integrated Distribution UI 🎯 MVP
+## Phase 2: Foundational (Blocking Prerequisites)
 
-**Goal**: Eliminate heavy cards and focus the main area on Topic and Distribution.
+**Purpose**: Core UI components and PeerJS integration
 
-**Independent Test**: Verify that the main content area shows the Topic and the Distribution Bar without any "Your Opinion" or "Everyone's Opinion" card borders.
-
-### Implementation for US2/US3
-
-- [X] T004 [US2] Update `ParticipantPositionBar` to display the current user's numeric value in the top-right of the container with a large font (e.g., text-5xl) in `src/components/ParticipantPositionBar.tsx`
-- [X] T005 [US2] Remove "Your Opinion" (`Card`) and "Participants List" container from the main layout in `src/app/room/[id]/page.tsx`
-- [X] T006 [US2] Integrate `InteractiveParticipantPositionBar` as a direct, full-width element in the content area of `src/app/room/[id]/page.tsx`
-- [X] T007 [US3] Adjust `TopicCard` styling to ensure it acts as the primary header element within the content area in `src/app/room/[id]/page.tsx`
-
-**Checkpoint**: Main layout is simplified. Distribution bar is now the primary interaction element.
+- [x] T006 Implement base `usePeer` hook in `src/hooks/usePeer.ts`
+- [x] T007 Create minimalist `Header` component in `src/components/Header.tsx`
+- [x] T008 [P] Add Popover UI component in `src/components/ui/popover.tsx` using shadcn
+- [x] T009 Implement distribution visualization in `src/components/ParticipantPositionBar.tsx`
 
 ---
 
-## Phase 4: User Story 1 - Header & Identity Refinement
+## Phase 3: User Story 1 - Create and Share Room (Completed) ✅
 
-**Goal**: Move identity management and sharing tools to the header.
+**Goal**: Redirect to random URL and share with others.
 
-**Independent Test**: Verify the name can be edited in the header and the "Share URL" button works as expected.
-
-### Implementation for US1
-
-- [X] T008 [US1] Move `NameInput` and the "Share URL" button from the main body to the `Header` component in `src/components/Header.tsx`
-- [X] T009 [US1] Add Room ID display and connection status (`Wifi` icon) to `src/components/Header.tsx`
-- [X] T010 [US1] Integrate the `Header` component at the top of the page in `src/app/room/[id]/page.tsx`
-
-**Checkpoint**: Identity and room tools are now consistently placed in the header.
+- [x] T010 [US1] Implement room redirection in `src/app/page.tsx`
+- [x] T011 [US1] Implement URL copy functionality in `src/components/Header.tsx`
 
 ---
 
-## Phase 5: Polish & Final Validation
+## Phase 4: User Story 2 - Real-time Slider Sync (Completed) ✅
 
-**Purpose**: Visual refinements and final compliance check.
+**Goal**: Synchronize 0-100 slider values across peers.
 
-- [X] T011 [P] Refine spacing and responsive behavior in `src/app/room/[id]/page.tsx`. Verify that vertical offset logic (SC-004) works correctly in the new layout.
-- [X] T012 Run `quickstart.md` validation scenarios (Multi-tab P2P test)
+- [x] T012 [US2] Implement `SYNC_UPDATE` payload in `src/lib/types.ts`
+- [x] T013 [US2] Connect slider `onValueCommit` to `usePeer` broadcast in `src/app/room/[id]/page.tsx`
+
+---
+
+## Phase 5: User Story 3 - Topic Synchronization (Completed) ✅
+
+**Goal**: Synchronize topic and labels across peers.
+
+- [x] T014 [US3] Implement `SYNC_TOPIC` payload in `src/hooks/usePeer.ts`
+- [x] T015 [US3] Add topic editing UI in `src/app/room/[id]/page.tsx`
+
+---
+
+## Phase 6: User Story 4 - QR Code Sharing (Priority: P1) 🎯 Current Target
+
+**Goal**: Allow users to share the room URL via a QR code in the header.
+
+**Independent Test**: Open the room, click the QR code button, scan the code with a phone, and verify the phone joins the same room.
+
+### Implementation for User Story 4
+
+- [x] T016 [P] [US4] Update `src/components/Header.tsx` imports for `react-qr-code` and `Popover`.
+- [x] T017 [US4] Implement the QR code rendering logic in `src/components/Header.tsx` using the current URL.
+- [x] T018 [US4] Add the `QrCode` icon button next to the "Share" button in the `Header` layout.
+- [x] T019 [US4] Wrap the QR code display in a `Popover` with a clean, white background and padding.
+- [x] T020 [US4] Ensure the QR code dynamically updates if the URL changes (though roomId is static).
+
+**Checkpoint**: User Story 4 is functional. QR code appears and is scannable.
+
+---
+
+## Phase 7: Polish & Cross-Cutting Concerns
+
+**Purpose**: Final UI refinements and documentation
+
+- [x] T021 [P] Verify QR code contrast and scannability on small screens.
+- [x] T022 Documentation: Update `specs/001-realtime-slider-sync/quickstart.md` with final verification steps.
+- [x] T023 Code cleanup: Remove any unused imports in `Header.tsx` after implementation.
+- [x] T024 [US4] Verify P2P connection (SC-002) and sync latency (SC-003) under 3s and 500ms respectively.
+- [x] T025 Verify "Anchor Disconnection" edge case behavior as described in spec.md.
 
 ---
 
@@ -78,30 +97,21 @@
 
 ### Phase Dependencies
 
-- **Phase 1 (Setup)**: Start here.
-- **Phase 2 (Foundational)**: Depends on Phase 1.
-- **Phase 3 (Integrated UI)**: Depends on Phase 2. Can proceed independently of Phase 4.
-- **Phase 4 (Header)**: Depends on Phase 2. Can proceed independently of Phase 3.
-- **Phase 5 (Polish)**: Depends on Phase 3 and 4.
+- **US4 (Phase 6)**: Depends on T003, T004 (Setup) and T008 (Foundational Popover).
+- **Polish (Phase 7)**: Depends on Phase 6 completion.
 
 ### Parallel Opportunities
 
-- T002 and T003 (Foundational components) can be worked on in parallel.
-- Phase 3 and Phase 4 can be implemented in parallel if the `Header` and `Main Content` areas are treated as separate sub-tasks.
+- T016 can be done while T008 is being set up.
+- T021 (Verification) can be done in parallel with T022 (Documentation).
 
 ---
 
 ## Implementation Strategy
 
-### MVP First (Unified Workspace)
-
-1. Complete Setup and Foundational components.
-2. Refactor the `RoomPage` to remove cards and unify the distribution bar.
-3. **VALIDATE**: Ensure the interactive slider still works and synchronizes correctly.
-
 ### Incremental Delivery
 
-1. Foundation: Compact NameInput and Header shell.
-2. Layout: Card removal and Bar integration.
-3. Identity: Header integration and room tools move.
-4. Polish: Mobile adjustments and final testing.
+1. **Setup**: Install `react-qr-code` and `popover`.
+2. **Foundational**: Add the Popover component to the UI library.
+3. **Feature**: Integrate the QR code button into the Header.
+4. **Validation**: Test with a real mobile device.

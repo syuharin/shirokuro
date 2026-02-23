@@ -12,6 +12,8 @@ Auto-generated from all feature plans. Last updated: 2026-02-22
 - TypeScript / Next.js 16+ (App Router) + React 19, Radix UI (Slider), PeerJS (001-realtime-slider-sync)
 - N/A (Stateless P2P) (001-realtime-slider-sync)
 - TypeScript / Next.js 16+ (App Router) + React 19, Tailwind CSS, Radix UI (Slider, Popover/Dialog), PeerJS (001-realtime-slider-sync)
+- TypeScript 5, React 19, Next.js 16. + `react-qr-code`, `peerjs`, `lucide-react`, `radix-ui`. (001-realtime-slider-sync)
+- N/A (Zero Database Policy). (001-realtime-slider-sync)
 
 - [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION] + [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION] (001-realtime-slider-sync)
 
@@ -32,9 +34,9 @@ cd src; pytest; ruff check .
 [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]: Follow standard conventions
 
 ## Recent Changes
+- 001-realtime-slider-sync: Added TypeScript 5, React 19, Next.js 16. + `react-qr-code`, `peerjs`, `lucide-react`, `radix-ui`.
 - 001-realtime-slider-sync: Added TypeScript / Next.js 16+ (App Router) + React 19, Tailwind CSS, Radix UI (Slider, Popover/Dialog), PeerJS
 - 001-realtime-slider-sync: Added TypeScript / Next.js 16+ (App Router) + React 19, Radix UI (Slider), PeerJS
-- 001-realtime-slider-sync: Added TypeScript / Next.js 14+ (App Router) + React, Tailwind CSS, Radix UI (Slider), PeerJS, Lucide React
 
 
 <!-- MANUAL ADDITIONS START -->

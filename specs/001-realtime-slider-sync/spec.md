@@ -63,6 +63,7 @@ As a room creator or participant, I want to set an "Topic" for the slider so eve
 - **FR-006**: System MUST broadcast the slider's value upon completion of interaction (`onValueCommit`).
 - **FR-007**: System MUST allow editing and synchronizing a "Topic" string and two "Scale Labels" (for 0 and 100).
 - **FR-008**: System MUST NOT persist any room, user, or slider data on a server or database.
+- **FR-009**: System MUST provide a QR code for the room URL to facilitate sharing.
 
 ### Key Entities
 

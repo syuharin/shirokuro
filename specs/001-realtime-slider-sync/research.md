@@ -1,41 +1,29 @@
-# Research: Layout Refinement & Name Input Placement
+# Research: QR Code Sharing for Shirokuro
 
-## Problem Statement
-The current UI has large cards for "Your Opinion" and "Everyone's Opinion," which feel bulky and redundant since the interactive slider is already part of the distribution bar. The name input is also tied to one of these large cards.
+## Decision: QR Code Library
+- **Choice**: `react-qr-code`
+- **Rationale**: 
+  - Lightweight, SVG-based (better for performance and crispness).
+  - Simple API, well-maintained.
+  - Compatible with React 19 and Next.js 16.
+- **Alternatives Considered**: 
+  - `next-qrcode`: More features but `react-qr-code` is sufficient for a simple QR code.
+  - `qrcode.react`: Common, but `react-qr-code` is generally preferred for its SVG output simplicity.
 
-## Findings
+## Decision: UI/UX Integration
+- **Approach**: Add a "QR Code" button in the `Header.tsx` component.
+- **UI Element**: Use a `Popover` from `@radix-ui/react-popover` (available via shadcn) to show the QR code when the button is clicked.
+- **Rationale**: 
+  - Keeps the header clean.
+  - Provides a quick way to show/hide the code without navigating away.
+  - Consistent with the minimalist UI principle of the Constitution.
 
-### 1. Name Input Placement
-- **Decision**: Move the name input to the **Header**.
-- **Rationale**: The display name is a "session identity" rather than "data input" related to the current topic. Placing it in the header follows common patterns for collaborative tools (e.g., Figma, Google Docs avatars).
-- **Implementation**: Use a small, editable name badge in the header or a simple input field next to the "Share URL" button.
+## Decision: Technology/Patterns
+- **Client-side Component**: The QR code component must be a 'use client' component (which the Header already is).
+- **Dynamic Import**: Not strictly necessary but can be used if bundle size is an issue.
+- **Library availability**: Must be installed via `npm install react-qr-code`.
 
-### 2. Streamlining "Your Opinion"
-- **Decision**: Remove the "Your Opinion" card.
-- **Rationale**: The slider is already in the distribution bar. The large numeric display (currently in `SliderComponent`) can be integrated into the distribution bar's header or as a floating overlay near the "Self" marker.
-- **Alternative**: Keep a very minimal "Current Value" display somewhere on the page, but not as a large card.
-
-### 3. Streamlining "Everyone's Opinion"
-- **Decision**: Remove the separate "Participants List" card.
-- **Rationale**: The distribution bar already shows everyone's relative position.
-- **Improvement**: Make the distribution bar slightly taller and ensure name badges are clear. If a list is still needed for accessibility or precise reading, make it a compact, collapsible list or a side drawer.
-
-## Decisions
-
-### Decision: Integrated Header
-- The header will now contain:
-  - Room ID
-  - Current User's Name (Editable)
-  - Share URL Button
-  - Connection Status
-
-### Decision: Focused Main Area
-- The main content area will only contain:
-  - Topic Card (Top)
-  - Interactive Distribution Bar (Middle/Bottom)
-
-### Decision: Numeric Display Refinement
-- Move the large "Your Value" number to the interactive bar's own header section to keep context unified.
-
-## Summary
-The UI will shift from a "Dashboard of Cards" to a "Unified Workspace" aesthetic, maximizing the space for the distribution visualization.
+## Research Tasks (Complete)
+- [x] Identify best QR code library for React 19/Next 16.
+- [x] Check compatibility with project constitution (Zero DB, Vercel Native).
+- [x] Determine UI placement in existing room header.

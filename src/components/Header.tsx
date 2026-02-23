@@ -1,10 +1,16 @@
 "use client";
 
-import { Wifi, Copy, Check } from "lucide-react";
+import { Wifi, Copy, Check, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NameInput } from "@/components/NameInput";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import QRCode from "react-qr-code";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface HeaderProps {
   roomId: string;
@@ -18,11 +24,14 @@ export function Header({ roomId, name, onNameChange, connectionStatus }: HeaderP
 
   const copyUrl = () => {
     if (typeof window !== "undefined") {
-      navigator.clipboard.writeText(window.location.href);
+      const url = window.location.href;
+      navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
   };
+
+  const currentUrl = typeof window !== "undefined" ? window.location.href : "";
 
   return (
     <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-neutral-200 shadow-sm">
@@ -42,15 +51,50 @@ export function Header({ roomId, name, onNameChange, connectionStatus }: HeaderP
           onChange={onNameChange} 
           variant="header"
         />
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={copyUrl} 
-          className="gap-2 font-bold rounded-lg border-neutral-200 hover:bg-neutral-50 hover:text-black w-full md:w-auto"
-        >
-          {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-          {copied ? "コピー完了" : "共有"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-lg border-neutral-200 hover:bg-neutral-50 hover:text-black shrink-0"
+                title="QRコードを表示"
+              >
+                <QrCode className="w-4 h-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-6 bg-white border-neutral-200 shadow-xl rounded-2xl" align="end">
+              <div className="flex flex-col items-center gap-4">
+                <div className="bg-white p-2 rounded-xl border border-neutral-100 shadow-sm">
+                  {currentUrl && (
+                    <QRCode
+                      value={currentUrl}
+                      size={200}
+                      style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                      viewBox={`0 0 256 256`}
+                    />
+                  )}
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-black text-black">スキャンして参加</p>
+                  <p className="text-[10px] text-neutral-400 font-mono mt-1 break-all max-w-[200px]">
+                    {currentUrl}
+                  </p>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={copyUrl} 
+            className="gap-2 font-bold rounded-lg border-neutral-200 hover:bg-neutral-50 hover:text-black w-full md:w-auto"
+          >
+            {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+            {copied ? "コピー完了" : "共有"}
+          </Button>
+        </div>
       </div>
     </header>
   );
