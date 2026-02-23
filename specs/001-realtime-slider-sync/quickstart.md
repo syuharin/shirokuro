@@ -25,6 +25,7 @@ To test P2P locally:
 2. In Window A, click "Create Group" (or similar URL `/room/[id]`).
 3. Copy the URL from Window A and paste it into Window B.
 4. Name both users and observe real-time marker updates on the `InteractiveParticipantPositionBar`.
+5. **Slider Step**: Note that the slider now moves in increments of 5 (e.g., 0, 5, 10, ...). Verify that both windows show the same stepped value.
 
 ## 📁 Key File Locations
 - **P2P Logic**: `src/hooks/usePeer.ts`

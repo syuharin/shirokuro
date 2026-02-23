@@ -9,7 +9,7 @@ Represents a participant in the room.
 |-------|------|-------------|
 | `peerId` | `string` | Unique identifier (from PeerJS) |
 | `name` | `string` | Temporary display name |
-| `value` | `number` | Slider value (0-100) |
+| `value` | `number` | Slider value (0-100, step: 5) |
 | `isSelf` | `boolean` | True if the peer represents the current user |
 | `lastUpdated`| `number` | Timestamp of the last update |
 

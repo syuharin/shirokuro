@@ -1,34 +1,27 @@
-# Research: Interactive Participant Distribution Bar
+# Research: Slider Step Increment Change
 
 ## Problem Statement
-The user's slider control and the distribution bar are spatially separated, forcing users to "look away" from everyone's context while adjusting their own position.
+The current slider allows for single-unit increments (0-100), but for some contexts, a broader, discrete step (like 5) provides better alignment and clearer choices.
 
 ## Findings
 
-### 1. Draggable Components vs. Radix Slider
-- **Draggable Components (Custom)**: Implementing manual drag/touch logic for `ParticipantMarker` is error-prone (handling offsets, constraints, and touch events).
-- **Radix Slider Overlay**: We can use the existing `Radix Slider` primitive. By making the slider's track transparent and overlaying it on the distribution bar (or making the bar *be* the slider track), we get built-in accessibility, touch support, and standard interaction patterns.
+### 1. Radix UI Slider `step` Property
+Radix UI's Slider primitive natively supports a `step` prop. Setting this to 5 will automatically snap the UI interaction to multiples of 5.
 
-### 2. Layout Integration
-- **Current Bar**: 24px height track, markers are absolutely positioned based on value %.
-- **Slider Track**: `h-1.5` by default in `ui/slider.tsx`.
-- **Decision**: Redesign `ParticipantPositionBar` to use `Radix Slider` as its structural core.
-  - The `Slider.Track` will act as the axis line.
-  - The `Slider.Thumb` will render the `ParticipantMarker` for `isSelf`.
-  - Non-self markers will be rendered as absolute positioned children within the same relative container.
+### 2. Broadcast Value Sync
+While the UI snaps, we should ensure the broadcast payload (`SYNC_UPDATE`) sends the stepped value. Since the UI state is controlled by the slider, `onValueChange` and `onValueCommit` will already receive the snapped value.
 
-### 3. Vertical Collision Management
-- Markers currently use `verticalOffset` to avoid overlapping.
-- **Problem**: Standard `Slider.Thumb` is centered on the track.
-- **Solution**: The `ParticipantMarker` already takes an `offset` prop. We can pass the `verticalOffset` calculated by `ParticipantPositionBar` to the `isSelf` marker even when it's acting as a slider thumb.
+### 3. Display Consistency
+The `SliderComponent` (which shows the large numeric display) currently uses `Math.round(value)`. With a step of 5, it will display 0, 5, 10, etc., without further rounding logic needed, provided the incoming state is already snapped.
 
-## Decision
-Refactor `ParticipantPositionBar` to become `InteractiveParticipantPositionBar`.
-- It will accept `value`, `onChange`, and `onCommit` props (optional).
-- When these props are present, the "Self" marker is rendered as a `Slider.Thumb`.
-- This eliminates the need for the separate `SliderComponent` (or at least makes it redundant).
+## Decisions
 
-## Rationale
-- Direct manipulation is more intuitive.
-- Reduces visual clutter by removing the separate "My Control" slider area.
-- Maintains accessibility via Radix UI.
+### Decision: Implement `step={5}` in `ParticipantPositionBar.tsx`
+- Rationale: Direct manipulation of the slider should reflect the user's intent to use discrete steps.
+- Alternatives: Manual snapping logic in the state update function was considered but rejected in favor of the native component property for better UX (UI feedback during drag).
+
+### Decision: No server-side validation needed
+- Rationale: Since the app is P2P and uses the Shirokuro Constitution (no DB/server state), client-side snapping is sufficient for the intended use case.
+
+## Summary
+The change is a targeted modification of the `step` prop in the `Radix Slider` primitive within the `ParticipantPositionBar` component.

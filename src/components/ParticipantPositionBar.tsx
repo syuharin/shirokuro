@@ -84,7 +84,7 @@ export function ParticipantPositionBar({
             onValueChange={(vals) => onChange(vals[0])}
             onValueCommit={(vals) => onCommit?.(vals[0])}
             max={100}
-            step={1}
+            step={5}
           >
             <SliderTrack className="h-0.5 bg-neutral-100 opacity-50">
               {/* Central Axis Line (Static visual) */}

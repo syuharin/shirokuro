@@ -1,25 +1,22 @@
-# Implementation Plan: [FEATURE]
+# Implementation Plan: 001-realtime-slider-sync
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
-
-**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
+**Branch**: `001-realtime-slider-sync` | **Date**: 2026-02-22 | **Spec**: `/specs/001-realtime-slider-sync/spec.md`
 
 ## Summary
 
-Currently, the user's slider control and the distribution bar (showing everyone's positions) are separate components. This requires the user to look at two different tracks. The goal is to integrate the user's slider functionality directly into the distribution bar, making the "Self" marker interactive. This creates a more intuitive and direct manipulation interface where the user drags their own marker along the same axis where others are displayed.
+This update modifies the interactive slider (ParticipantPositionBar) to enforce a step increment of 5. Instead of free-form 0-100 values (step 1), the slider will snap to multiples of 5 (0, 5, 10, ... 100). This applies to the user's own interactions and ensures consistency across the room.
 
 ## Technical Context
 
-**Language/Version**: TypeScript / Next.js 14+ (App Router)
-**Primary Dependencies**: React, Tailwind CSS, Radix UI (Slider), PeerJS, Lucide React
-**Storage**: N/A (Stateless/P2P)
-**Testing**: Vitest / Playwright (for P2P simulation)
-**Target Platform**: Vercel (Hobby)
+**Language/Version**: TypeScript / Next.js 16+ (App Router)
+**Primary Dependencies**: React 19, Radix UI (Slider), PeerJS
+**Storage**: N/A (Stateless P2P)
+**Testing**: Manual / E2E (Multi-tab)
+**Target Platform**: Vercel
 **Project Type**: Web Application
-**Performance Goals**: <100ms UI latency, <500ms P2P broadcast latency
-**Constraints**: Must work on mobile/touch, No server-side state
-**Scale/Scope**: Up to 10-15 concurrent peers per room
+**Performance Goals**: Instant snapping and broadcast
+**Constraints**: Snapping must be enforced on both UI and broadcast value
+**Scale/Scope**: Single component modification + verify P2P broadcast
 
 ## Constitution Check
 
@@ -32,8 +29,6 @@ Currently, the user's slider control and the distribution bar (showing everyone'
 - [x] **Vercel Native**: Does this fit in the Vercel Hobby plan? (YES)
 - [x] **Minimalist UI**: Is the UI simple (0-100 slider + list)? (YES)
 
-[Document justifications for any intentional (temporary) deviations if allowed by governance]
-
 ## Project Structure
 
 ### Documentation (this feature)
@@ -41,45 +36,31 @@ Currently, the user's slider control and the distribution bar (showing everyone'
 ```text
 specs/001-realtime-slider-sync/
 ├── plan.md              # This file
-├── research.md          # Phase 0 output (Draggable UI integration)
-├── data-model.md        # Phase 1 output (PeerState/RoomState)
-├── quickstart.md        # Phase 1 output (Setup & P2P Testing)
+├── research.md          # Phase 0 output
+├── data-model.md        # Phase 1 output
+├── quickstart.md        # Phase 1 output
 ├── contracts/           
-│   └── p2p-payloads.md  # Phase 1 output (P2P Contract & UI Contract)
-└── tasks.md             # Phase 2 output (Next step)
+│   └── p2p-payloads.md  # Phase 1 output
+└── tasks.md             # Phase 2 output
 ```
 
 ### Source Code (repository root)
 
 ```text
 src/
-├── app/
-│   └── room/
-│       └── [id]/
-│           └── page.tsx        # Room Entry Point (Layout updates)
 ├── components/
-│   ├── ParticipantPositionBar.tsx # REFACTOR: Interactive Distribution Bar
-│   ├── SliderComponent.tsx        # DEPRECATE/REFACTOR: Simplified display
-│   └── ui/
-│       └── slider.tsx             # Radix Slider Primitive
-├── hooks/
-│   └── usePeer.ts                 # P2P Logic
-└── lib/
-    └── types.ts                   # Type Definitions
+│   ├── ParticipantPositionBar.tsx # TARGET: Modify slider step
+│   └── SliderComponent.tsx        # TARGET: Verify numeric display sync
+└── app/
+    └── room/
+        └── [id]/
+            └── page.tsx           # Entry point
 ```
 
-**Structure Decision**: Standard Next.js structure. Refactoring existing components in `src/components/`.
+**Structure Decision**: Modify existing components in place as this is a refinement of an existing feature.
 
 ## Complexity Tracking
-
-> **Fill ONLY if Constitution Check has violations that must be justified**
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
 | (None)    |            |                                     |
-
-## Status Update
-
-- **Phase 0 (Outline & Research)**: COMPLETE (research.md generated)
-- **Phase 1 (Design & Contracts)**: COMPLETE (data-model.md, contracts/, quickstart.md, agent-specific file updated)
-- **Next Step**: Run `/speckit.tasks` to break this down into implementation steps.
