@@ -294,7 +294,7 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
           }, delay);
         } else {
           console.error('Max reconnection retries reached. Starting host migration...');
-          setMyState(prev => ({ ...prev, status: 'connected' }));
+          setMyState(prev => ({ ...prev, status: 'online' }));
           startElection();
         }
       } else {
