@@ -1,8 +1,11 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
+/**
+ * Merges CSS classes using clsx and tailwind-merge.
+ */
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 export function generateRoomId(): string {
@@ -23,8 +26,8 @@ export interface SessionData {
 }
 
 export function saveSession(data: Partial<SessionData>) {
-  if (typeof window === "undefined") return;
-  
+  if (typeof window === "undefined" || !window.sessionStorage) return;
+
   Object.entries(data).forEach(([key, value]) => {
     if (value !== null && value !== undefined) {
       try {
@@ -37,34 +40,45 @@ export function saveSession(data: Partial<SessionData>) {
 }
 
 export function loadSession(roomId: string): SessionData {
-  if (typeof window === "undefined") {
-    return { peerId: null, name: null, value: null, isAnchor: null, roomId: null };
+  const emptySession = { peerId: null, name: null, value: null, isAnchor: null, roomId: null };
+
+  if (typeof window === "undefined" || !window.sessionStorage) {
+    return emptySession;
   }
 
-  const storedRoomId = sessionStorage.getItem(`${STORAGE_PREFIX}roomId`);
-  
-  // If the room ID doesn't match, we shouldn't use the stored session
-  if (storedRoomId !== roomId) {
-    return { peerId: null, name: null, value: null, isAnchor: null, roomId: null };
+  try {
+    const storedRoomId = sessionStorage.getItem(`${STORAGE_PREFIX}roomId`);
+
+    // If the room ID doesn't match, we shouldn't use the stored session
+    if (storedRoomId !== roomId) {
+      return emptySession;
+    }
+
+    const peerId = sessionStorage.getItem(`${STORAGE_PREFIX}peerId`);
+    const name = sessionStorage.getItem(`${STORAGE_PREFIX}name`);
+    const valueStr = sessionStorage.getItem(`${STORAGE_PREFIX}value`);
+    const isAnchorStr = sessionStorage.getItem(`${STORAGE_PREFIX}isAnchor`);
+
+    return {
+      peerId,
+      name,
+      value: valueStr ? parseFloat(valueStr) : null,
+      isAnchor: isAnchorStr === "true",
+      roomId: storedRoomId
+    };
+  } catch (e) {
+    console.warn("Failed to load session from sessionStorage:", e);
+    return emptySession;
   }
-
-  const peerId = sessionStorage.getItem(`${STORAGE_PREFIX}peerId`);
-  const name = sessionStorage.getItem(`${STORAGE_PREFIX}name`);
-  const valueStr = sessionStorage.getItem(`${STORAGE_PREFIX}value`);
-  const isAnchorStr = sessionStorage.getItem(`${STORAGE_PREFIX}isAnchor`);
-
-  return {
-    peerId,
-    name,
-    value: valueStr ? parseFloat(valueStr) : null,
-    isAnchor: isAnchorStr === "true",
-    roomId: storedRoomId
-  };
 }
 
 export function clearSession() {
-  if (typeof window === "undefined") return;
-  
-  const keysToRemove = ["peerId", "name", "value", "isAnchor", "roomId"];
-  keysToRemove.forEach(key => sessionStorage.removeItem(`${STORAGE_PREFIX}${key}`));
+  if (typeof window === "undefined" || !window.sessionStorage) return;
+
+  try {
+    const keysToRemove = ["peerId", "name", "value", "isAnchor", "roomId"];
+    keysToRemove.forEach(key => sessionStorage.removeItem(`${STORAGE_PREFIX}${key}`));
+  } catch (e) {
+    console.error("Failed to clear session:", e);
+  }
 }

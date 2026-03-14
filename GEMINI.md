@@ -17,6 +17,8 @@ Auto-generated from all feature plans. Last updated: 2026-02-22
 - TypeScript / Next.js 15+ (App Router), React 19 + PeerJS, Lucide React (for status icons), Radix UI (Slider) (002-robust-sync-persistence)
 - `sessionStorage` (Browser-native) for ephemeral session persistence (002-robust-sync-persistence)
 - TypeScript 5, Next.js 16+, React 19 + Tailwind CSS 4, Radix UI (Slider, Popover), PeerJS, Lucide React (003-layout-refinement)
+- [if applicable, e.g., PostgreSQL, CoreData, files or N/A] (004-host-migration)
+- TypeScript / Next.js 16+ (App Router) + React 19 + PeerJS, Lucide React, Shadcn/UI (Tailwind CSS) (004-host-migration)
 
 - [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION] + [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION] (001-realtime-slider-sync)
 
@@ -37,9 +39,9 @@ cd src; pytest; ruff check .
 [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]: Follow standard conventions
 
 ## Recent Changes
+- 004-host-migration: Added TypeScript / Next.js 16+ (App Router) + React 19 + PeerJS, Lucide React, Shadcn/UI (Tailwind CSS)
+- 004-host-migration: Added [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION] + [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
 - 003-layout-refinement: Added TypeScript 5, Next.js 16+, React 19 + Tailwind CSS 4, Radix UI (Slider, Popover), PeerJS, Lucide React
-- 002-robust-sync-persistence: Added TypeScript / Next.js 15+ (App Router), React 19 + PeerJS, Lucide React (for status icons), Radix UI (Slider)
-- 001-realtime-slider-sync: Added TypeScript 5, React 19, Next.js 16. + `react-qr-code`, `peerjs`, `lucide-react`, `radix-ui`.
 
 
 <!-- MANUAL ADDITIONS START -->

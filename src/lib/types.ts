@@ -3,6 +3,8 @@
 export type PeerId = string;
 export type RoomId = string;
 
+export type HostRole = 'Guest' | 'Candidate' | 'Acting Host' | 'Anchor';
+
 export interface PeerState {
   peerId: PeerId;
   name: string;
@@ -19,7 +21,7 @@ export interface RoomState {
   labelMax: string;
 }
 
-export type PayloadType = 'SYNC_UPDATE' | 'INITIAL_PEER_LIST' | 'SYNC_TOPIC' | 'HEARTBEAT';
+export type PayloadType = 'SYNC_UPDATE' | 'INITIAL_PEER_LIST' | 'SYNC_TOPIC' | 'HEARTBEAT' | 'HOST_MIGRATION';
 
 export interface BasePayload {
   type: PayloadType;
@@ -57,4 +59,12 @@ export interface HeartbeatPayload extends BasePayload {
   };
 }
 
-export type P2PPayload = SyncUpdatePayload | InitialPeerListPayload | SyncTopicPayload | HeartbeatPayload;
+export interface HostMigrationPayload extends BasePayload {
+  type: 'HOST_MIGRATION';
+  payload: {
+    action: 'ELECTION_ANNOUNCEMENT' | 'HOST_TAKEOVER_SUCCESS';
+    actingHostId: PeerId;
+  };
+}
+
+export type P2PPayload = SyncUpdatePayload | InitialPeerListPayload | SyncTopicPayload | HeartbeatPayload | HostMigrationPayload;
