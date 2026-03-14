@@ -42,7 +42,7 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
   const reconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
   const electionTimerRef = useRef<NodeJS.Timeout | null>(null);
   const takeoverTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const MAX_RECONNECT_RETRIES = 5;
+  const MAX_RECONNECT_RETRIES = 2; // Reduced to speed up migration
 
   const myStateRef = useRef(myState);
   const topicRef = useRef(topic);
@@ -125,16 +125,24 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
   const startElection = useCallback(() => {
     if (hostRoleRef.current === 'Anchor') return;
 
+    const anchorId = `${PREFIX}anchor-${roomId}`;
     console.log('Anchor connection lost. Starting election...');
     
+    // Get all online peers, EXCLUDING the old anchor ID
     const onlinePeers = participantsRef.current
-      .filter(p => p.status === 'online')
+      .filter(p => p.status === 'online' && p.peerId !== anchorId)
       .map(p => p.peerId);
     
-    if (myStateRef.current.peerId) {
+    if (myStateRef.current.peerId && myStateRef.current.peerId !== anchorId) {
       onlinePeers.push(myStateRef.current.peerId);
     }
 
+    if (onlinePeers.length === 0) {
+       console.log('No other peers available for election.');
+       return;
+    }
+
+    // Deterministic election: Smallest PeerID wins
     onlinePeers.sort((a, b) => a.localeCompare(b));
     const winner = onlinePeers[0];
 
@@ -162,7 +170,7 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
       console.log('Winner is:', winner);
       setHostRole('Guest');
     }
-  }, [broadcast]);
+  }, [broadcast, roomId]);
 
   const handleData = useCallback((data: unknown) => {
     const payload = data as P2PPayload;
@@ -280,9 +288,14 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
       connectionsRef.current.delete(conn.peer);
 
       if (hostRoleRef.current !== 'Anchor' && conn.peer === anchorId) {
+        // Immediate mark as offline in the UI/list to allow correct election
+        updateParticipantsList((prev) =>
+          prev.map(p => p.peerId === conn.peer ? { ...p, status: 'offline' } : p)
+        );
+
         if (reconnectCountRef.current < MAX_RECONNECT_RETRIES) {
           reconnectCountRef.current++;
-          const delay = Math.min(30000, 1000 * Math.pow(2, reconnectCountRef.current));
+          const delay = 1000 * reconnectCountRef.current; // Shorter fixed delay for fast recovery
           console.log(`Anchor connection lost. Retrying (${reconnectCountRef.current}/${MAX_RECONNECT_RETRIES}) in ${delay}ms...`);
           setMyState(prev => ({ ...prev, status: 'reconnecting' }));
 
@@ -293,7 +306,7 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
             }
           }, delay);
         } else {
-          console.error('Max reconnection retries reached. Starting host migration...');
+          console.error('Anchor unreachable. Starting host migration...');
           setMyState(prev => ({ ...prev, status: 'online' }));
           startElection();
         }
@@ -340,8 +353,14 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
       setHostRole('Anchor');
       setMyState(prev => ({ ...prev, peerId: newId, status: 'online' }));
       
-      // Existing participants in the mesh maintain their direct 
-      // connections. Newcomers will discover this static ID.
+      // peer.destroy() terminated all mesh connections. We must 
+      // re-establish them using the new Anchor identity to 
+      // maintain session continuity for existing guests.
+      participantsRef.current.forEach(participant => {
+         if (participant.status === 'online') {
+            connectToPeer(participant.peerId);
+         }
+      });
 
       const successPayload: HostMigrationPayload = {
         type: 'HOST_MIGRATION',

@@ -15,7 +15,7 @@ export function generateRoomId(): string {
   return `${part1}-${part2}`;
 }
 
-const STORAGE_PREFIX = "shirokuro_";
+const STORAGE_PREFIX = "shirokuro-";
 
 export interface SessionData {
   peerId: string | null;
