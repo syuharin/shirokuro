@@ -52,7 +52,9 @@ export interface InitialPeerListPayload extends BasePayload {
 
 export interface HeartbeatPayload extends BasePayload {
   type: 'HEARTBEAT';
-  payload: Record<string, never>; // Empty payload
+  payload: {
+    peerId: PeerId;
+  };
 }
 
 export type P2PPayload = SyncUpdatePayload | InitialPeerListPayload | SyncTopicPayload | HeartbeatPayload;

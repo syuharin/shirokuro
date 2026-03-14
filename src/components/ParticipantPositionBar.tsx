@@ -81,7 +81,7 @@ export function ParticipantPositionBar({
             max={100}
             step={5}
           >
-            <SliderTrack className="h-0.5 bg-neutral-100 opacity-50">
+            <SliderTrack className="h-0.5 bg-neutral-500 opacity-30">
               {/* Central Axis Line (Static visual) */}
             </SliderTrack>
 
@@ -109,7 +109,7 @@ export function ParticipantPositionBar({
         ) : (
           <div className="relative w-full h-full flex items-center">
             {/* Central Axis Line */}
-            <div className="absolute left-0 right-0 h-0.5 bg-neutral-100 top-1/2 -translate-y-1/2" />
+            <div className="absolute left-0 right-0 h-0.5 bg-neutral-500 opacity-30 top-1/2 -translate-y-1/2" />
             
             {/* Markers Container */}
             <div className="relative w-full h-full">
@@ -127,19 +127,19 @@ export function ParticipantPositionBar({
       </div>
       
       <div className="flex justify-between px-1">
-        <div className="flex flex-col items-start gap-1">
-          <span className="text-[10px] font-black text-neutral-300">0</span>
-          <div className="w-px h-1 bg-neutral-200" />
-          <span className="text-[9px] font-bold text-neutral-400 mt-1">{labelMin}</span>
+        <div className="flex flex-col items-start gap-1.5 max-w-[30%]">
+          <span className="text-sm font-black text-neutral-400">0</span>
+          <div className="w-px h-1.5 bg-neutral-300" />
+          <span className="text-sm font-bold text-neutral-600 mt-0.5 leading-tight">{labelMin}</span>
         </div>
-        <div className="flex flex-col items-center gap-1">
-          <span className="text-[10px] font-black text-neutral-300">50</span>
-          <div className="w-px h-1 bg-neutral-200" />
+        <div className="flex flex-col items-center gap-1.5">
+          <span className="text-sm font-black text-neutral-400">50</span>
+          <div className="w-px h-1.5 bg-neutral-300" />
         </div>
-        <div className="flex flex-col items-end gap-1">
-          <span className="text-[10px] font-black text-neutral-300">100</span>
-          <div className="w-px h-1 bg-neutral-200" />
-          <span className="text-[9px] font-bold text-neutral-400 mt-1">{labelMax}</span>
+        <div className="flex flex-col items-end gap-1.5 max-w-[30%] text-right">
+          <span className="text-sm font-black text-neutral-400">100</span>
+          <div className="w-px h-1.5 bg-neutral-300" />
+          <span className="text-sm font-bold text-neutral-600 mt-0.5 leading-tight">{labelMax}</span>
         </div>
       </div>
     </div>
@@ -190,7 +190,10 @@ function ParticipantMarker({
           badgeStyles
         )}
       >
-        <span className="opacity-40 font-mono tabular-nums">{Math.round(peer.value)}</span>
+        <span className={cn(
+          "font-mono tabular-nums",
+          isSelf ? "text-white/70" : "text-neutral-900/60"
+        )}>{Math.round(peer.value)}</span>
         <span className="tracking-tight max-w-[80px] truncate">
           {peer.name || 'ゲスト'}{isSelf && ' (自分)'}
         </span>

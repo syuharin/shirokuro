@@ -44,15 +44,18 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
 
   useEffect(() => { 
     myStateRef.current = myState;
-    // T006: Persist myState changes to sessionStorage
+  }, [myState]);
+
+  // T006: Persist profile changes to sessionStorage (avoiding high-frequency slider value writes)
+  useEffect(() => {
     saveSession({
       peerId: myState.peerId,
       name: myState.name,
-      value: myState.value,
       isAnchor: isAnchorRef.current,
       roomId: roomId
     });
-  }, [myState, roomId]);
+  }, [myState.name, myState.peerId, roomId]);
+
   useEffect(() => { topicRef.current = topic; }, [topic]);
   useEffect(() => { labelMinRef.current = labelMin; }, [labelMin]);
   useEffect(() => { labelMaxRef.current = labelMax; }, [labelMax]);

@@ -114,11 +114,12 @@ export default function RoomPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-2">
-                  <Button onClick={saveTopic} className="flex-1 h-14 bg-black text-white font-black rounded-xl text-lg gap-2">
-                    <Check className="w-6 h-6" /> 決定して全員に同期
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button onClick={saveTopic} className="flex-1 h-auto py-4 bg-black text-white font-black rounded-xl text-lg gap-2 leading-tight">
+                    <Check className="w-6 h-6 shrink-0" /> 
+                    <span className="text-left">決定して全員に同期</span>
                   </Button>
-                  <Button variant="outline" onClick={() => setIsEditingTopic(false)} className="h-14 px-8 font-bold rounded-xl border-2 border-neutral-200">
+                  <Button variant="outline" onClick={() => setIsEditingTopic(false)} className="h-14 sm:h-auto px-8 font-bold rounded-xl border-2 border-neutral-200">
                     キャンセル
                   </Button>
                 </div>

@@ -58,13 +58,13 @@ export function Header({ roomId, name, onNameChange, connectionStatus }: HeaderP
           onChange={onNameChange} 
           variant="header"
         />
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 size="icon"
-                className="rounded-lg border-neutral-200 hover:bg-neutral-50 hover:text-black shrink-0"
+                className="rounded-lg border-neutral-200 hover:bg-neutral-50 hover:text-black shrink-0 hidden sm:flex"
                 title="QRコードを表示"
               >
                 <QrCode className="w-4 h-4" />
@@ -92,11 +92,44 @@ export function Header({ roomId, name, onNameChange, connectionStatus }: HeaderP
             </PopoverContent>
           </Popover>
 
+          {/* QR Button for mobile (full width) */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="rounded-lg border-neutral-200 hover:bg-neutral-50 hover:text-black sm:hidden gap-2 font-bold"
+              >
+                <QrCode className="w-4 h-4" />
+                QRコードを表示
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[90vw] max-w-sm p-6 bg-white border-neutral-200 shadow-xl rounded-2xl" align="center">
+              <div className="flex flex-col items-center gap-4">
+                <div className="bg-white p-2 rounded-xl border border-neutral-100 shadow-sm w-full aspect-square flex items-center justify-center">
+                  {currentUrl && (
+                    <QRCode
+                      value={currentUrl}
+                      size={200}
+                      style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                      viewBox={`0 0 256 256`}
+                    />
+                  )}
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-black text-black">スキャンして参加</p>
+                  <p className="text-[10px] text-neutral-400 font-mono mt-1 break-all">
+                    {currentUrl}
+                  </p>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+
           <Button 
             variant="outline" 
             size="sm" 
             onClick={copyUrl} 
-            className="gap-2 font-bold rounded-lg border-neutral-200 hover:bg-neutral-50 hover:text-black w-full md:w-auto"
+            className="gap-2 font-bold rounded-lg border-neutral-200 hover:bg-neutral-50 hover:text-black w-full sm:w-auto h-10 sm:h-9"
           >
             {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
             {copied ? "コピー完了" : "共有"}
