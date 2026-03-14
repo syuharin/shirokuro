@@ -90,6 +90,7 @@
 - [x] T023 Code cleanup: Remove any unused imports in `Header.tsx` after implementation.
 - [x] T024 [US4] Verify P2P connection (SC-002) and sync latency (SC-003) under 3s and 500ms respectively.
 - [x] T025 Verify "Anchor Disconnection" edge case behavior as described in spec.md.
+- [x] T026 [FIX] Implement full P2P mesh connection by having anchor broadcast new joiners.
 
 ---
 

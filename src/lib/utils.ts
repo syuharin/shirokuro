@@ -6,6 +6,8 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function generateRoomId(): string {
-  // Simple random string generation for URL-friendly IDs (e.g., 'abc-123-xyz')
-  return Math.random().toString(36).substring(2, 10);
+  // Simple random string generation for URL-friendly IDs (e.g., 'abcd-1234')
+  const part1 = Math.random().toString(36).substring(2, 6);
+  const part2 = Math.random().toString(36).substring(2, 6);
+  return `${part1}-${part2}`;
 }

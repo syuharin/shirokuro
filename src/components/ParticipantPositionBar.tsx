@@ -1,9 +1,8 @@
 "use client";
 
 import { PeerState } from "@/lib/types";
-import { User } from "lucide-react";
 import { Slider as SliderPrimitive } from "radix-ui";
-import { SliderTrack, SliderThumb } from "@/components/ui/slider";
+import { SliderTrack } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 
 interface ParticipantPositionBarProps {
@@ -30,7 +29,7 @@ export function ParticipantPositionBar({
   // othersとして分離する
   const isInteractive = value !== undefined && onChange !== undefined;
   
-  const others = participants;
+  const others = participants.filter(p => p.peerId !== myState.peerId);
   const me = { ...myState, isSelf: true };
   
   // 近接判定（この値以下の差であれば重なっているとみなす）

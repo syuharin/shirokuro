@@ -31,11 +31,13 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
   const topicRef = useRef(topic);
   const labelMinRef = useRef(labelMin);
   const labelMaxRef = useRef(labelMax);
+  const isAnchorRef = useRef(isAnchor);
 
   useEffect(() => { myStateRef.current = myState; }, [myState]);
   useEffect(() => { topicRef.current = topic; }, [topic]);
   useEffect(() => { labelMinRef.current = labelMin; }, [labelMin]);
   useEffect(() => { labelMaxRef.current = labelMax; }, [labelMax]);
+  useEffect(() => { isAnchorRef.current = isAnchor; }, [isAnchor]);
 
   // Broadcast to all connected peers
   const broadcast = useCallback((data: P2PPayload) => {
@@ -79,8 +81,13 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
     });
   }, [broadcast]);
 
+  // Use a ref for connectToPeer to avoid circular dependency with setupConnection
+  const connectToPeerRef = useRef<(id: string) => void>(() => {});
+  // Use a ref for setupConnection to avoid effect re-runs
+  const setupConnectionRef = useRef<(conn: DataConnection) => void>(() => {});
+
   // Handle Incoming Data
-  const handleData = useCallback((data: unknown, senderId: string) => {
+  const handleData = useCallback((data: unknown) => {
     const payload = data as P2PPayload;
     
     if (payload.type === 'SYNC_UPDATE') {
@@ -105,7 +112,7 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
     } else if (payload.type === 'INITIAL_PEER_LIST') {
       const peersToConnect = payload.payload.peers;
       peersToConnect.forEach((targetId) => {
-        connectToPeer(targetId);
+        connectToPeerRef.current(targetId);
       });
     }
   }, []);
@@ -136,20 +143,37 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
       };
       conn.send(topicPayload);
 
-      // If I am Anchor, send list of other peers to the new joiner
-      if (isAnchor) {
-         const others = Array.from(connectionsRef.current.keys()).filter(id => id !== conn.peer);
-         if (others.length > 0) {
+      // If I am Anchor, manage mesh connections
+      if (isAnchorRef.current) {
+         // 1. Send the list of existing peers to the new joiner so they can connect to everyone
+         const existingPeers = Array.from(connectionsRef.current.entries())
+            .filter(([id, c]) => id !== conn.peer && c.open)
+            .map(([id]) => id);
+
+         if (existingPeers.length > 0) {
             const listPayload: InitialPeerListPayload = {
                 type: 'INITIAL_PEER_LIST',
-                payload: { peers: others }
+                payload: { peers: existingPeers }
             };
             conn.send(listPayload);
          }
+
+         // 2. Broadcast the NEW peer's ID to all existing peers so they can connect to the joiner
+         // We use INITIAL_PEER_LIST with a single peerId for this purpose
+         const newPeerNotification: InitialPeerListPayload = {
+            type: 'INITIAL_PEER_LIST',
+            payload: { peers: [conn.peer] }
+         };
+         
+         connectionsRef.current.forEach((existingConn, id) => {
+            if (id !== conn.peer && existingConn.open) {
+               existingConn.send(newPeerNotification);
+            }
+         });
       }
     });
 
-    conn.on('data', (data) => handleData(data, conn.peer));
+    conn.on('data', (data) => handleData(data));
     
     conn.on('close', () => {
       connectionsRef.current.delete(conn.peer);
@@ -160,7 +184,7 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
       console.warn('Connection error:', err);
       connectionsRef.current.delete(conn.peer);
     });
-  }, [handleData, isAnchor]);
+  }, [handleData]);
 
   const connectToPeer = useCallback((targetId: string) => {
     if (!peerRef.current || connectionsRef.current.has(targetId) || targetId === peerRef.current.id) return;
@@ -168,11 +192,21 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
     setupConnection(conn);
   }, [setupConnection]);
 
+  // Sync the refs
+  useEffect(() => {
+    connectToPeerRef.current = connectToPeer;
+  }, [connectToPeer]);
+
+  useEffect(() => {
+    setupConnectionRef.current = setupConnection;
+  }, [setupConnection]);
+
   // Initialize Peer
   useEffect(() => {
     if (!roomId) return;
 
     let mounted = true;
+    const currentConnections = connectionsRef.current;
 
     const initPeer = async () => {
       const { Peer } = await import('peerjs');
@@ -195,6 +229,7 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
         const error = err as { type: string };
         if (error.type === 'unavailable-id') {
           // Anchor exists, join as regular peer
+          peer.destroy();
           console.log('Anchor exists, joining as regular peer...');
           const randomId = `${PREFIX}peer-${Math.random().toString(36).substr(2, 9)}`;
           const regularPeer = new Peer(randomId);
@@ -206,14 +241,14 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
             setPeerId(id);
             setMyState(prev => ({ ...prev, peerId: id }));
             setStatus('connected');
-            
+
             // Connect to Anchor
             const conn = regularPeer.connect(anchorId);
-            setupConnection(conn);
+            setupConnectionRef.current(conn);
           });
 
           regularPeer.on('connection', (conn) => {
-             setupConnection(conn);
+             setupConnectionRef.current(conn);
           });
 
           peerRef.current = regularPeer;
@@ -222,9 +257,8 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
           setStatus('error');
         }
       });
-
       peer.on('connection', (conn) => {
-        setupConnection(conn);
+        setupConnectionRef.current(conn);
       });
 
       peerRef.current = peer;
@@ -235,7 +269,7 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
     return () => {
       mounted = false;
       peerRef.current?.destroy();
-      connectionsRef.current.clear();
+      currentConnections.clear();
     };
   }, [roomId]); 
 

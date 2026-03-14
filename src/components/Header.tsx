@@ -3,7 +3,7 @@
 import { Wifi, Copy, Check, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NameInput } from "@/components/NameInput";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import QRCode from "react-qr-code";
 import {
@@ -21,8 +21,17 @@ interface HeaderProps {
 
 export function Header({ roomId, name, onNameChange, connectionStatus }: HeaderProps) {
   const [copied, setCopied] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const currentUrl = mounted ? window.location.href : "";
 
   const copyUrl = () => {
+
     if (typeof window !== "undefined") {
       const url = window.location.href;
       navigator.clipboard.writeText(url);
@@ -30,8 +39,6 @@ export function Header({ roomId, name, onNameChange, connectionStatus }: HeaderP
       setTimeout(() => setCopied(false), 2000);
     }
   };
-
-  const currentUrl = typeof window !== "undefined" ? window.location.href : "";
 
   return (
     <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-neutral-200 shadow-sm">
