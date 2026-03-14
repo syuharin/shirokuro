@@ -8,6 +8,7 @@ export interface PeerState {
   name: string;
   value: number; // 0-100
   isSelf: boolean;
+  status: 'online' | 'reconnecting' | 'offline';
   lastUpdated?: number; // timestamp
 }
 

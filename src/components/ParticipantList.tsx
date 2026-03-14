@@ -2,6 +2,7 @@
 
 import { PeerState } from "@/lib/types";
 import { Users } from "lucide-react";
+import { StatusDot } from "./ui/status-dot";
 
 interface ParticipantListProps {
   myState: PeerState;
@@ -45,7 +46,7 @@ function ParticipantCard({ peer, isSelf }: { peer: PeerState, isSelf?: boolean }
   return (
     <div className={`flex items-center justify-between p-8 rounded-[2rem] border transition-all duration-500 shadow-sm ${isSelf ? 'bg-white border-black ring-2 ring-black ring-offset-4' : 'bg-neutral-50 border-neutral-100 hover:border-neutral-300'}`}>
       <div className="flex items-center gap-6">
-        <div className={`w-4 h-4 rounded-full shadow-inner ${isSelf ? 'bg-black animate-pulse' : 'bg-neutral-200'}`} />
+        <StatusDot status={peer.status} />
         <div>
           <div className="font-black text-2xl text-black leading-tight tracking-tighter">{peer.name || 'ゲスト'} {isSelf && '(あなた)'}</div>
           <div className="text-[10px] text-neutral-300 font-black uppercase tracking-tighter mt-1">PEER: {peer.peerId.slice(-6)}</div>
