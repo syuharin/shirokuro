@@ -140,7 +140,7 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
       });
     } else if (payload.type === 'HEARTBEAT') {
       // Simple presence confirmation
-      const { peerId } = payload as unknown as { payload: { peerId: string } };
+      const { peerId } = (payload as unknown as { payload: { peerId: string } }).payload;
       setParticipants((prev) => 
         prev.map(p => p.peerId === peerId ? { ...p, status: 'online', lastUpdated: Date.now() } : p)
       );
