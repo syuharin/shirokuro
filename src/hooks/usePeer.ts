@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import type { Peer, DataConnection } from 'peerjs';
-import { PeerState, P2PPayload, SyncUpdatePayload, InitialPeerListPayload, SyncTopicPayload } from '../lib/types';
+import { PeerState, P2PPayload, SyncUpdatePayload, InitialPeerListPayload, SyncTopicPayload, HostMigrationPayload } from '../lib/types';
 import { loadSession, saveSession } from '../lib/utils';
 
 const PREFIX = 'shirokuro-'; 
