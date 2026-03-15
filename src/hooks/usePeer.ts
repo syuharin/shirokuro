@@ -37,8 +37,12 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
   const reconnectCountRef = useRef(0);
   const reconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
   const promotionTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const heartbeatTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const monitorTimerRef = useRef<NodeJS.Timeout | null>(null);
   const MAX_RECONNECT_RETRIES = 5;
   const MIGRATION_GRACE_PERIOD = 3000; // 3 seconds as per research.md
+  const HEARTBEAT_INTERVAL = 3000; // Send heartbeat every 3s
+  const STALE_THRESHOLD = 10000; // Mark as offline if no update for 10s
   
   const myStateRef = useRef(myState);
   const topicRef = useRef(topic);
@@ -70,6 +74,69 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
   useEffect(() => { labelMinRef.current = labelMin; }, [labelMin]);
   useEffect(() => { labelMaxRef.current = labelMax; }, [labelMax]);
   useEffect(() => { isAnchorRef.current = isAnchor; }, [isAnchor]);
+
+  // T015: Heartbeat and Stale Monitoring Logic
+  useEffect(() => {
+    if (status !== 'connected') {
+      if (heartbeatTimerRef.current) clearInterval(heartbeatTimerRef.current);
+      if (monitorTimerRef.current) clearInterval(monitorTimerRef.current);
+      return;
+    }
+
+    // 1. Send Heartbeat
+    heartbeatTimerRef.current = setInterval(() => {
+      const payload: P2PPayload = {
+        type: 'HEARTBEAT',
+        payload: { peerId: myStateRef.current.peerId }
+      };
+      broadcast(payload);
+    }, HEARTBEAT_INTERVAL);
+
+    // 2. Monitor Stale Participants
+    monitorTimerRef.current = setInterval(() => {
+      const now = Date.now();
+      const anchorId = `${PREFIX}anchor-${roomId}`;
+      let anchorLostSilently = false;
+
+      setParticipants((prev) => {
+        const next = prev.map(p => {
+          const isStale = now - (p.lastUpdated || 0) > STALE_THRESHOLD;
+          if (isStale && p.status === 'online') {
+            if (p.peerId === anchorId) anchorLostSilently = true;
+            return { ...p, status: 'offline' as const };
+          }
+          return p;
+        });
+
+        // Trigger migration if anchor was marked offline in this pass
+        if (anchorLostSilently && !isAnchorRef.current && !promotionTimerRef.current) {
+          console.log('Anchor heartbeat lost. Triggering silent migration...');
+          
+          // Election logic: must use 'next' which has the latest offline statuses
+          const myJoin = myStateRef.current.joinTimestamp;
+          const myId = myStateRef.current.peerId;
+          const activeOthers = next.filter(p => p.status === 'online');
+
+          const candidates = [...activeOthers, myStateRef.current].sort((a, b) => {
+            if (a.joinTimestamp !== b.joinTimestamp) return a.joinTimestamp - b.joinTimestamp;
+            return (a.peerId || '').localeCompare(b.peerId || '');
+          });
+
+          if (candidates[0].peerId === myId) {
+            // Race condition fix: Move the side effect out of the state updater
+            setTimeout(() => promoteToHost(), 0);
+          }
+        }
+
+        return next;
+      });
+    }, 2000); // Check every 2s
+
+    return () => {
+      if (heartbeatTimerRef.current) clearInterval(heartbeatTimerRef.current);
+      if (monitorTimerRef.current) clearInterval(monitorTimerRef.current);
+    };
+  }, [status, roomId, broadcast, promoteToHost]);
 
   // Broadcast to all connected peers
   const broadcast = useCallback((data: P2PPayload) => {
@@ -185,7 +252,7 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
       });
     } else if (payload.type === 'HEARTBEAT') {
       // Simple presence confirmation
-      const { peerId } = (payload as unknown as { payload: { peerId: string } }).payload;
+      const { peerId } = payload.payload;
       setParticipants((prev) => 
         prev.map(p => p.peerId === peerId ? { ...p, status: 'online', lastUpdated: Date.now() } : p)
       );
@@ -293,12 +360,15 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
         if (!promotionTimerRef.current) {
           console.log(`Anchor lost. Starting migration election timer (${MIGRATION_GRACE_PERIOD}ms)...`);
           promotionTimerRef.current = setTimeout(() => {
-            // Election logic: find participant with lowest joinTimestamp
-            const others = participantsRef.current.filter(p => p.status === 'online');
+            // Election logic: find participant with lowest joinTimestamp who is actually active
+            const now = Date.now();
+            const activeOthers = participantsRef.current.filter(p => 
+              p.status === 'online' && (now - (p.lastUpdated || 0) < STALE_THRESHOLD)
+            );
             const myJoin = myStateRef.current.joinTimestamp;
             const myId = myStateRef.current.peerId;
 
-            const candidates = [...others, myStateRef.current].sort((a, b) => {
+            const candidates = [...activeOthers, myStateRef.current].sort((a, b) => {
               if (a.joinTimestamp !== b.joinTimestamp) {
                 return a.joinTimestamp - b.joinTimestamp;
               }
@@ -316,7 +386,8 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
 
         if (reconnectCountRef.current < MAX_RECONNECT_RETRIES) {
           reconnectCountRef.current++;
-          const delay = Math.min(30000, 1000 * Math.pow(2, reconnectCountRef.current));
+          // Clarified backoff: 2s, 4s, 8s...
+          const delay = 1000 * Math.pow(2, reconnectCountRef.current);
           
           console.log(`Anchor connection lost. Retrying (${reconnectCountRef.current}/${MAX_RECONNECT_RETRIES}) in ${delay}ms...`);
           setMyState(prev => ({ ...prev, status: 'reconnecting' }));
