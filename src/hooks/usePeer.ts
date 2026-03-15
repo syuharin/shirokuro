@@ -75,6 +75,49 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
   useEffect(() => { labelMaxRef.current = labelMax; }, [labelMax]);
   useEffect(() => { isAnchorRef.current = isAnchor; }, [isAnchor]);
 
+  // Broadcast to all connected peers
+  const broadcast = useCallback((data: P2PPayload) => {
+    connectionsRef.current.forEach((conn) => {
+      if (conn.open) {
+        conn.send(data);
+      }
+    });
+  }, []);
+
+  // Update Topic and Broadcast
+  const updateTopic = useCallback((newTopic: string, min: string, max: string) => {
+    setTopic(newTopic);
+    setLabelMin(min);
+    setLabelMax(max);
+    const payload: SyncTopicPayload = {
+      type: 'SYNC_TOPIC',
+      payload: { topic: newTopic, labelMin: min, labelMax: max },
+    };
+    broadcast(payload);
+  }, [broadcast]);
+
+  // Update Local State and Broadcast
+  const updateMyState = useCallback((newState: Partial<PeerState>, shouldBroadcast: boolean = true) => {
+    setMyState((prev) => {
+      const updated = { ...prev, ...newState, lastUpdated: Date.now() };
+      
+      if (shouldBroadcast) {
+        const payload: SyncUpdatePayload = {
+          type: 'SYNC_UPDATE',
+          payload: {
+            peerId: updated.peerId,
+            name: updated.name || 'Anonymous', // Fallback for broadcast
+            value: updated.value,
+            joinTimestamp: updated.joinTimestamp,
+          },
+        };
+        
+        broadcast(payload);
+      }
+      return updated;
+    });
+  }, [broadcast]);
+
   // T015: Heartbeat and Stale Monitoring Logic
   useEffect(() => {
     if (status !== 'connected') {
@@ -137,49 +180,6 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
       if (monitorTimerRef.current) clearInterval(monitorTimerRef.current);
     };
   }, [status, roomId, broadcast, promoteToHost]);
-
-  // Broadcast to all connected peers
-  const broadcast = useCallback((data: P2PPayload) => {
-    connectionsRef.current.forEach((conn) => {
-      if (conn.open) {
-        conn.send(data);
-      }
-    });
-  }, []);
-
-  // Update Topic and Broadcast
-  const updateTopic = useCallback((newTopic: string, min: string, max: string) => {
-    setTopic(newTopic);
-    setLabelMin(min);
-    setLabelMax(max);
-    const payload: SyncTopicPayload = {
-      type: 'SYNC_TOPIC',
-      payload: { topic: newTopic, labelMin: min, labelMax: max },
-    };
-    broadcast(payload);
-  }, [broadcast]);
-
-  // Update Local State and Broadcast
-  const updateMyState = useCallback((newState: Partial<PeerState>, shouldBroadcast: boolean = true) => {
-    setMyState((prev) => {
-      const updated = { ...prev, ...newState, lastUpdated: Date.now() };
-      
-      if (shouldBroadcast) {
-        const payload: SyncUpdatePayload = {
-          type: 'SYNC_UPDATE',
-          payload: {
-            peerId: updated.peerId,
-            name: updated.name || 'Anonymous', // Fallback for broadcast
-            value: updated.value,
-            joinTimestamp: updated.joinTimestamp,
-          },
-        };
-        
-        broadcast(payload);
-      }
-      return updated;
-    });
-  }, [broadcast]);
 
   // Use a ref for connectToPeer to avoid circular dependency with setupConnection
   const connectToPeerRef = useRef<(id: string) => void>(() => {});
