@@ -33,10 +33,8 @@ export default function RoomPage() {
 
   const {
     participants, myState, updateMyState,
-    topic, labelMin, labelMax, updateTopic, status, hostRole
+    topic, labelMin, labelMax, updateTopic, status, hostRole, isMigrating
   } = usePeer(roomId, MESSAGES.DEFAULT_NAME);
-
-  const isHostTransitioning = hostRole === 'Candidate' || hostRole === 'Acting Host';
 
   const [isEditingTopic, setIsEditingTopic] = useState(false);
   const [tempTopic, setTempTopic] = useState(topic);
@@ -78,7 +76,7 @@ export default function RoomPage() {
         />
 
         {/* Host Migration Status Banner */}
-        {isHostTransitioning && (
+        {isMigrating && (
           <div className="bg-blue-50 border-2 border-blue-500 p-4 rounded-xl flex items-center gap-3 animate-pulse">
             <Info className="text-blue-500 w-6 h-6" />
             <p className="text-blue-700 font-bold">

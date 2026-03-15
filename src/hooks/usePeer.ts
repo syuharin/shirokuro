@@ -16,6 +16,7 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
   const [peerId, setPeerId] = useState<string | null>(null);
   const [isAnchor, setIsAnchor] = useState<boolean>(false);
   const [hostRole, setHostRole] = useState<HostRole>('Guest');
+  const [isMigrating, setIsMigrating] = useState<boolean>(false);
   const [topic, setTopic] = useState<string>('トピックを編集して同期を開始してください');
   const [labelMin, setLabelMin] = useState<string>('0');
   const [labelMax, setLabelMax] = useState<string>('100');
@@ -42,7 +43,7 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
   const reconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
   const electionTimerRef = useRef<NodeJS.Timeout | null>(null);
   const takeoverTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const MAX_RECONNECT_RETRIES = 2; // Reduced to speed up migration
+  const MAX_RECONNECT_RETRIES = 2;
 
   const myStateRef = useRef(myState);
   const topicRef = useRef(topic);
@@ -122,13 +123,70 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
     });
   }, []);
 
+  // US3: ID Takeover logic
+  const attemptTakeover = useCallback(async () => {
+    const { Peer } = await import('peerjs');
+    const anchorId = `${PREFIX}anchor-${roomId}`;
+    
+    console.log(`Attempting to takeover Anchor ID: ${anchorId} (Attempt ${takeoverRetryRef.current + 1})`);
+
+    const p = new Peer(anchorId);
+
+    p.on('open', (newId) => {
+      console.log('Successfully re-occupied Anchor ID:', newId);
+      
+      if (peerRef.current) {
+         peerRef.current.destroy();
+      }
+
+      peerRef.current = p;
+      setPeerId(newId);
+      setIsAnchor(true);
+      setHostRole('Anchor');
+      setIsMigrating(false);
+      setMyState(prev => ({ ...prev, peerId: newId, status: 'online' }));
+      
+      participantsRef.current.forEach(participant => {
+         if (participant.status === 'online') {
+            connectToPeerRef.current(participant.peerId);
+         }
+      });
+
+      const successPayload: HostMigrationPayload = {
+        type: 'HOST_MIGRATION',
+        payload: {
+          action: 'HOST_TAKEOVER_SUCCESS',
+          actingHostId: newId
+        }
+      };
+      broadcast(successPayload);
+    });
+
+    p.on('connection', (conn) => setupConnectionRef.current(conn));
+
+    p.on('error', (err) => {
+      const error = err as { type: string };
+      if (error.type === 'unavailable-id') {
+        p.destroy();
+        takeoverRetryRef.current++;
+        const delay = Math.min(MAX_BACKOFF, INITIAL_BACKOFF * Math.pow(2, takeoverRetryRef.current - 1));
+        console.log(`Anchor ID unavailable, retrying in ${delay}ms...`);
+        
+        if (takeoverTimerRef.current) clearTimeout(takeoverTimerRef.current);
+        takeoverTimerRef.current = setTimeout(() => attemptTakeover(), delay);
+      } else {
+        console.error('Takeover Peer Error:', err);
+      }
+    });
+  }, [roomId, broadcast]);
+
   const startElection = useCallback(() => {
     if (hostRoleRef.current === 'Anchor') return;
 
     const anchorId = `${PREFIX}anchor-${roomId}`;
     console.log('Anchor connection lost. Starting election...');
+    setIsMigrating(true);
     
-    // Get all online peers, EXCLUDING the old anchor ID
     const onlinePeers = participantsRef.current
       .filter(p => p.status === 'online' && p.peerId !== anchorId)
       .map(p => p.peerId);
@@ -142,7 +200,6 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
        return;
     }
 
-    // Deterministic election: Smallest PeerID wins
     onlinePeers.sort((a, b) => a.localeCompare(b));
     const winner = onlinePeers[0];
 
@@ -164,13 +221,43 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
         console.log('Promoted to Acting Host');
         setHostRole('Acting Host');
         takeoverRetryRef.current = 0;
-        attemptTakeoverRef.current();
+        attemptTakeover();
       }, ELECTION_TIMEOUT);
     } else {
       console.log('Winner is:', winner);
       setHostRole('Guest');
     }
-  }, [broadcast, roomId]);
+  }, [broadcast, roomId, attemptTakeover]);
+
+  const handleAnchorDisconnect = useCallback(() => {
+    const anchorId = `${PREFIX}anchor-${roomId}`;
+    
+    // Immediate mark as offline in the UI/list to allow correct election
+    updateParticipantsList((prev) =>
+      prev.map(p => p.peerId === anchorId ? { ...p, status: 'offline' } : p)
+    );
+
+    if (reconnectCountRef.current < MAX_RECONNECT_RETRIES) {
+      reconnectCountRef.current++;
+      const delay = 1000 * reconnectCountRef.current;
+      console.log(`Anchor connection lost. Retrying (${reconnectCountRef.current}/${MAX_RECONNECT_RETRIES}) in ${delay}ms...`);
+      
+      // Start showing the banner during reconnection attempts
+      setIsMigrating(true);
+      setMyState(prev => ({ ...prev, status: 'reconnecting' }));
+
+      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = setTimeout(() => {
+        if (peerRef.current && !peerRef.current.destroyed) {
+          connectToPeerRef.current(anchorId);
+        }
+      }, delay);
+    } else {
+      console.error('Anchor unreachable after retries. Starting host migration...');
+      setMyState(prev => ({ ...prev, status: 'online' }));
+      startElection();
+    }
+  }, [roomId, updateParticipantsList, startElection]);
 
   const handleData = useCallback((data: unknown) => {
     const payload = data as P2PPayload;
@@ -210,6 +297,7 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
       const { action, actingHostId } = payload.payload;
       if (action === 'ELECTION_ANNOUNCEMENT') {
         console.log('Election announcement from:', actingHostId);
+        setIsMigrating(true);
         if (hostRoleRef.current === 'Candidate' || hostRoleRef.current === 'Acting Host') {
            if (actingHostId.localeCompare(myStateRef.current.peerId) < 0) {
               console.log('Stepping down, new candidate has smaller ID');
@@ -220,6 +308,7 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
         }
       } else if (action === 'HOST_TAKEOVER_SUCCESS') {
          console.log('New Anchor established:', actingHostId);
+         setIsMigrating(false);
          if (actingHostId !== myStateRef.current.peerId) {
             connectToPeerRef.current(actingHostId);
          }
@@ -234,6 +323,7 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
       connectionsRef.current.set(conn.peer, conn);
       if (conn.peer === anchorId) {
         reconnectCountRef.current = 0;
+        setIsMigrating(false);
       }
       
       const payload: SyncUpdatePayload = {
@@ -286,30 +376,8 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
 
     conn.on('close', () => {
       connectionsRef.current.delete(conn.peer);
-
       if (hostRoleRef.current !== 'Anchor' && conn.peer === anchorId) {
-        // Immediate mark as offline in the UI/list to allow correct election
-        updateParticipantsList((prev) =>
-          prev.map(p => p.peerId === conn.peer ? { ...p, status: 'offline' } : p)
-        );
-
-        if (reconnectCountRef.current < MAX_RECONNECT_RETRIES) {
-          reconnectCountRef.current++;
-          const delay = 1000 * reconnectCountRef.current; // Shorter fixed delay for fast recovery
-          console.log(`Anchor connection lost. Retrying (${reconnectCountRef.current}/${MAX_RECONNECT_RETRIES}) in ${delay}ms...`);
-          setMyState(prev => ({ ...prev, status: 'reconnecting' }));
-
-          if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
-          reconnectTimerRef.current = setTimeout(() => {
-            if (peerRef.current && !peerRef.current.destroyed) {
-              connectToPeerRef.current(anchorId);
-            }
-          }, delay);
-        } else {
-          console.error('Anchor unreachable. Starting host migration...');
-          setMyState(prev => ({ ...prev, status: 'online' }));
-          startElection();
-        }
+        handleAnchorDisconnect();
       } else {
         updateParticipantsList((prev) =>
           prev.map(p => p.peerId === conn.peer ? { ...p, status: 'offline' } : p)
@@ -320,75 +388,17 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
     conn.on('error', (err) => {
       console.warn('Connection error:', err);
       connectionsRef.current.delete(conn.peer);
+      if (hostRoleRef.current !== 'Anchor' && conn.peer === anchorId) {
+        handleAnchorDisconnect();
+      }
     });
-  }, [handleData, roomId, updateParticipantsList, startElection]);
+  }, [handleData, roomId, updateParticipantsList, handleAnchorDisconnect]);
 
   const connectToPeer = useCallback((targetId: string) => {
     if (!peerRef.current || connectionsRef.current.has(targetId) || targetId === peerRef.current.id) return;
     const conn = peerRef.current.connect(targetId);
     setupConnection(conn);
   }, [setupConnection]);
-
-  // US3: ID Takeover logic
-  const attemptTakeover = useCallback(async () => {
-    if (hostRoleRef.current !== 'Acting Host') return;
-
-    const { Peer } = await import('peerjs');
-    const anchorId = `${PREFIX}anchor-${roomId}`;
-    
-    console.log(`Attempting to takeover Anchor ID: ${anchorId} (Attempt ${takeoverRetryRef.current + 1})`);
-
-    const p = new Peer(anchorId);
-
-    p.on('open', (newId) => {
-      console.log('Successfully re-occupied Anchor ID:', newId);
-      
-      if (peerRef.current) {
-         peerRef.current.destroy();
-      }
-
-      peerRef.current = p;
-      setPeerId(newId);
-      setIsAnchor(true);
-      setHostRole('Anchor');
-      setMyState(prev => ({ ...prev, peerId: newId, status: 'online' }));
-      
-      // peer.destroy() terminated all mesh connections. We must 
-      // re-establish them using the new Anchor identity to 
-      // maintain session continuity for existing guests.
-      participantsRef.current.forEach(participant => {
-         if (participant.status === 'online') {
-            connectToPeer(participant.peerId);
-         }
-      });
-
-      const successPayload: HostMigrationPayload = {
-        type: 'HOST_MIGRATION',
-        payload: {
-          action: 'HOST_TAKEOVER_SUCCESS',
-          actingHostId: newId
-        }
-      };
-      broadcast(successPayload);
-    });
-
-    p.on('connection', (conn) => setupConnection(conn));
-
-    p.on('error', (err) => {
-      const error = err as { type: string };
-      if (error.type === 'unavailable-id') {
-        p.destroy();
-        takeoverRetryRef.current++;
-        const delay = Math.min(MAX_BACKOFF, INITIAL_BACKOFF * Math.pow(2, takeoverRetryRef.current - 1));
-        console.log(`Anchor ID unavailable, retrying in ${delay}ms...`);
-        
-        if (takeoverTimerRef.current) clearTimeout(takeoverTimerRef.current);
-        takeoverTimerRef.current = setTimeout(() => attemptTakeover(), delay);
-      } else {
-        console.error('Takeover Peer Error:', err);
-      }
-    });
-  }, [roomId, broadcast, setupConnection]);
 
   useEffect(() => {
     connectToPeerRef.current = connectToPeer;
@@ -482,6 +492,11 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
             }
           } else if (error.type === 'peer-unavailable') {
              console.log('Target peer unavailable, will retry later.');
+             // IMPORTANT FIX: If the anchor is unavailable during a connection attempt,
+             // trigger the retry/election logic immediately.
+             if (err.toString().includes(anchorId)) {
+                handleAnchorDisconnect();
+             }
           } else {
             console.error('Peer Error:', err);
             setStatus('error');
@@ -510,12 +525,13 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
       peerRef.current?.destroy();
       currentConnections.clear();
     };
-  }, [roomId]);
+  }, [roomId, handleAnchorDisconnect]);
 
   return {
     peerId,
     isAnchor,
     hostRole,
+    isMigrating,
     topic,
     labelMin,
     labelMax,
