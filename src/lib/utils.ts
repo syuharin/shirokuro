@@ -20,6 +20,7 @@ export interface SessionData {
   value: number | null;
   isAnchor: boolean | null;
   roomId: string | null;
+  joinTimestamp: number | null;
 }
 
 export function saveSession(data: Partial<SessionData>) {
@@ -38,33 +39,35 @@ export function saveSession(data: Partial<SessionData>) {
 
 export function loadSession(roomId: string): SessionData {
   if (typeof window === "undefined") {
-    return { peerId: null, name: null, value: null, isAnchor: null, roomId: null };
+    return { peerId: null, name: null, value: null, isAnchor: null, roomId: null, joinTimestamp: null };
   }
 
   const storedRoomId = sessionStorage.getItem(`${STORAGE_PREFIX}roomId`);
   
   // If the room ID doesn't match, we shouldn't use the stored session
   if (storedRoomId !== roomId) {
-    return { peerId: null, name: null, value: null, isAnchor: null, roomId: null };
+    return { peerId: null, name: null, value: null, isAnchor: null, roomId: null, joinTimestamp: null };
   }
 
   const peerId = sessionStorage.getItem(`${STORAGE_PREFIX}peerId`);
   const name = sessionStorage.getItem(`${STORAGE_PREFIX}name`);
   const valueStr = sessionStorage.getItem(`${STORAGE_PREFIX}value`);
   const isAnchorStr = sessionStorage.getItem(`${STORAGE_PREFIX}isAnchor`);
+  const joinTimestampStr = sessionStorage.getItem(`${STORAGE_PREFIX}joinTimestamp`);
 
   return {
     peerId,
     name,
     value: valueStr ? parseFloat(valueStr) : null,
-    isAnchor: isAnchorStr === "true",
-    roomId: storedRoomId
+    isAnchor: isAnchorStr === null ? null : isAnchorStr === "true",
+    roomId: storedRoomId,
+    joinTimestamp: joinTimestampStr ? parseInt(joinTimestampStr, 10) : null
   };
 }
 
 export function clearSession() {
   if (typeof window === "undefined") return;
   
-  const keysToRemove = ["peerId", "name", "value", "isAnchor", "roomId"];
+  const keysToRemove = ["peerId", "name", "value", "isAnchor", "roomId", "joinTimestamp"];
   keysToRemove.forEach(key => sessionStorage.removeItem(`${STORAGE_PREFIX}${key}`));
 }

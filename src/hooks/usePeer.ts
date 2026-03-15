@@ -14,6 +14,7 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
   const [labelMin, setLabelMin] = useState<string>('0');
   const [labelMax, setLabelMax] = useState<string>('100');
   const [status, setStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
+  const [notification, setNotification] = useState<{ message: string, type: 'success' | 'info' } | null>(null);
   
   const [myState, setMyState] = useState<PeerState>(() => {
     // T005: Load session state on mount
@@ -24,6 +25,7 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
       value: session.value !== null ? session.value : 50,
       isSelf: true,
       status: 'online',
+      joinTimestamp: session.joinTimestamp || Date.now(),
       lastUpdated: Date.now(),
     };
   });
@@ -34,27 +36,35 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
   const connectionsRef = useRef<Map<string, DataConnection>>(new Map());
   const reconnectCountRef = useRef(0);
   const reconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const promotionTimerRef = useRef<NodeJS.Timeout | null>(null);
   const MAX_RECONNECT_RETRIES = 5;
+  const MIGRATION_GRACE_PERIOD = 3000; // 3 seconds as per research.md
   
   const myStateRef = useRef(myState);
   const topicRef = useRef(topic);
   const labelMinRef = useRef(labelMin);
   const labelMaxRef = useRef(labelMax);
   const isAnchorRef = useRef(isAnchor);
+  const participantsRef = useRef(participants);
 
   useEffect(() => { 
     myStateRef.current = myState;
   }, [myState]);
+
+  useEffect(() => {
+    participantsRef.current = participants;
+  }, [participants]);
 
   // T006: Persist profile changes to sessionStorage (avoiding high-frequency slider value writes)
   useEffect(() => {
     saveSession({
       peerId: myState.peerId,
       name: myState.name,
-      isAnchor: isAnchorRef.current,
-      roomId: roomId
+      isAnchor: isAnchor,
+      roomId: roomId,
+      joinTimestamp: myState.joinTimestamp
     });
-  }, [myState.name, myState.peerId, roomId]);
+  }, [myState.name, myState.peerId, myState.joinTimestamp, isAnchor, roomId]);
 
   useEffect(() => { topicRef.current = topic; }, [topic]);
   useEffect(() => { labelMinRef.current = labelMin; }, [labelMin]);
@@ -94,6 +104,7 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
             peerId: updated.peerId,
             name: updated.name || 'Anonymous', // Fallback for broadcast
             value: updated.value,
+            joinTimestamp: updated.joinTimestamp,
           },
         };
         
@@ -107,13 +118,44 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
   const connectToPeerRef = useRef<(id: string) => void>(() => {});
   // Use a ref for setupConnection to avoid effect re-runs
   const setupConnectionRef = useRef<(conn: DataConnection) => void>(() => {});
+  // Use a ref for initPeer to allow re-triggering from promotion
+  const initPeerRef = useRef<() => void>(() => {});
+
+  const promoteToHost = useCallback(() => {
+    console.log('Promoting to Host (Anchor)...');
+    
+    // Race condition fix: Explicitly persist the new role before re-initializing
+    saveSession({
+      peerId: myStateRef.current.peerId,
+      name: myStateRef.current.name,
+      isAnchor: true,
+      roomId: roomId,
+      joinTimestamp: myStateRef.current.joinTimestamp
+    });
+
+    if (peerRef.current) {
+      peerRef.current.destroy();
+      peerRef.current = null;
+    }
+    
+    // Set flag to try becoming anchor in next init
+    setIsAnchor(true);
+    isAnchorRef.current = true;
+    setNotification({ message: 'あなたがホストになりました', type: 'success' });
+    
+    // Clear any existing reconnect timers
+    if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+    
+    // Re-initialize as Anchor
+    if (initPeerRef.current) initPeerRef.current();
+  }, []);
 
   // Handle Incoming Data
   const handleData = useCallback((data: unknown) => {
     const payload = data as P2PPayload;
     
     if (payload.type === 'SYNC_UPDATE') {
-      const { peerId, name, value } = payload.payload;
+      const { peerId, name, value, joinTimestamp } = payload.payload;
       
       // Skip if this is my own data (prevents double self in participants list)
       if (peerId === myStateRef.current.peerId) return;
@@ -121,11 +163,11 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
       setParticipants((prev) => {
         const index = prev.findIndex(p => p.peerId === peerId);
         if (index === -1) {
-          return [...prev, { peerId, name, value, isSelf: false, status: 'online', lastUpdated: Date.now() }];
+          return [...prev, { peerId, name, value, joinTimestamp, isSelf: false, status: 'online', lastUpdated: Date.now() }];
         }
         // Surgical update to avoid unnecessary array/object recreation during frequent slider moves
         const next = [...prev];
-        next[index] = { ...next[index], name, value, status: 'online', lastUpdated: Date.now() };
+        next[index] = { ...next[index], name, value, joinTimestamp, status: 'online', lastUpdated: Date.now() };
         return next;
       });
 
@@ -147,6 +189,16 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
       setParticipants((prev) => 
         prev.map(p => p.peerId === peerId ? { ...p, status: 'online', lastUpdated: Date.now() } : p)
       );
+    } else if (payload.type === 'HOST_MIGRATION') {
+      const { newHostId } = payload.payload;
+      console.log('Host migration detected:', newHostId);
+      
+      const newHost = participantsRef.current.find(p => p.peerId === newHostId);
+      if (newHost) {
+        setNotification({ message: `新しいホスト: ${newHost.name || 'ゲスト'}`, type: 'info' });
+      } else {
+        setNotification({ message: 'ホストが交代しました', type: 'info' });
+      }
     }
   }, []);
 
@@ -159,6 +211,10 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
       // Reset reconnect count if we successfully connect to the Anchor
       if (conn.peer === anchorId) {
         reconnectCountRef.current = 0;
+        if (promotionTimerRef.current) {
+          clearTimeout(promotionTimerRef.current);
+          promotionTimerRef.current = null;
+        }
       }
       
       // T013: Send my state immediately upon (re)connection
@@ -168,6 +224,7 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
           peerId: myStateRef.current.peerId,
           name: myStateRef.current.name || 'Anonymous',
           value: myStateRef.current.value,
+          joinTimestamp: myStateRef.current.joinTimestamp,
         },
       };
       conn.send(payload);
@@ -182,6 +239,19 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
         },
       };
       conn.send(topicPayload);
+
+      // If I am Anchor, broadcast migration notification if needed
+      if (isAnchorRef.current) {
+        const migrationPayload: HostMigrationPayload = {
+          type: 'HOST_MIGRATION',
+          payload: {
+            newHostId: myStateRef.current.peerId,
+            oldHostId: anchorId, // technically we are the new anchor
+            timestamp: Date.now()
+          }
+        };
+        conn.send(migrationPayload);
+      }
 
       // If I am Anchor, manage mesh connections
       if (isAnchorRef.current) {
@@ -219,6 +289,31 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
       
       // T010: Reconnection logic with exponential backoff and retry limit
       if (!isAnchorRef.current && conn.peer === anchorId) {
+        // Start promotion timer if anchor is lost
+        if (!promotionTimerRef.current) {
+          console.log(`Anchor lost. Starting migration election timer (${MIGRATION_GRACE_PERIOD}ms)...`);
+          promotionTimerRef.current = setTimeout(() => {
+            // Election logic: find participant with lowest joinTimestamp
+            const others = participantsRef.current.filter(p => p.status === 'online');
+            const myJoin = myStateRef.current.joinTimestamp;
+            const myId = myStateRef.current.peerId;
+
+            const candidates = [...others, myStateRef.current].sort((a, b) => {
+              if (a.joinTimestamp !== b.joinTimestamp) {
+                return a.joinTimestamp - b.joinTimestamp;
+              }
+              return (a.peerId || '').localeCompare(b.peerId || '');
+            });
+
+            if (candidates[0].peerId === myId) {
+              promoteToHost();
+            } else {
+              console.log(`Another peer is senior (Join: ${candidates[0].joinTimestamp}). Waiting for them to anchor.`);
+            }
+            promotionTimerRef.current = null;
+          }, MIGRATION_GRACE_PERIOD);
+        }
+
         if (reconnectCountRef.current < MAX_RECONNECT_RETRIES) {
           reconnectCountRef.current++;
           const delay = Math.min(30000, 1000 * Math.pow(2, reconnectCountRef.current));
@@ -359,10 +454,12 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
     };
 
     initPeer();
+    initPeerRef.current = initPeer;
 
     return () => {
       mounted = false;
       if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+      if (promotionTimerRef.current) clearTimeout(promotionTimerRef.current);
       peerRef.current?.destroy();
       currentConnections.clear();
     };
@@ -378,6 +475,8 @@ export function usePeer(roomId: string, initialName: string = 'Anonymous') {
     participants,
     myState,
     updateMyState,
-    status
+    status,
+    notification,
+    clearNotification: () => setNotification(null)
   };
 }

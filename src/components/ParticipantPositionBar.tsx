@@ -4,6 +4,7 @@ import { PeerState } from "@/lib/types";
 import { Slider as SliderPrimitive } from "radix-ui";
 import { SliderTrack } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+import { Crown } from "lucide-react";
 
 interface ParticipantPositionBarProps {
   myState: PeerState;
@@ -155,6 +156,7 @@ function ParticipantMarker({
   isSelf?: boolean;
   offset?: number;
 }) {
+  const isHost = peer.peerId.includes('anchor-');
   // マーカーの左位置を計算（中央揃えのために調整）
   const leftPosition = `${peer.value}%`;
   
@@ -190,6 +192,7 @@ function ParticipantMarker({
           badgeStyles
         )}
       >
+        {isHost && <Crown className={cn("w-3.5 h-3.5", isSelf ? "text-amber-400" : "text-black")} fill="currentColor" />}
         <span className={cn(
           "font-mono tabular-nums",
           isSelf ? "text-white/70" : "text-neutral-900/60"

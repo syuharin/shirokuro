@@ -9,6 +9,7 @@ import { useState } from "react";
 import { ParticipantPositionBar } from "@/components/ParticipantPositionBar";
 import { Input } from "@/components/ui/input";
 import { Header } from "@/components/Header";
+import { StatusNotification } from "@/components/ui/status-notification";
 
 export default function RoomPage() {
   const { id } = useParams();
@@ -16,7 +17,8 @@ export default function RoomPage() {
 
   const { 
     participants, myState, updateMyState, 
-    topic, labelMin, labelMax, updateTopic, status 
+    topic, labelMin, labelMax, updateTopic, status,
+    notification, clearNotification
   } = usePeer(roomId, "ゲスト");
 
   const [isEditingTopic, setIsEditingTopic] = useState(false);
@@ -146,6 +148,14 @@ export default function RoomPage() {
             labelMax={labelMax}
           />
         </div>
+
+        {notification && (
+          <StatusNotification 
+            message={notification.message}
+            type={notification.type}
+            onClose={clearNotification}
+          />
+        )}
 
       </div>
     </div>

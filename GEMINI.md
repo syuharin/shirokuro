@@ -1,4 +1,4 @@
-﻿# shirokuro Development Guidelines
+# shirokuro Development Guidelines
 
 Auto-generated from all feature plans. Last updated: 2026-02-22
 
@@ -39,7 +39,6 @@ cd src; pytest; ruff check .
 ## Recent Changes
 - 003-layout-refinement: Added TypeScript 5, Next.js 16+, React 19 + Tailwind CSS 4, Radix UI (Slider, Popover), PeerJS, Lucide React
 - 002-robust-sync-persistence: Added TypeScript / Next.js 15+ (App Router), React 19 + PeerJS, Lucide React (for status icons), Radix UI (Slider)
-- 001-realtime-slider-sync: Added TypeScript 5, React 19, Next.js 16. + `react-qr-code`, `peerjs`, `lucide-react`, `radix-ui`.
 
 
 <!-- MANUAL ADDITIONS START -->

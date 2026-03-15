@@ -43,12 +43,25 @@ export function ParticipantList({ myState, participants }: ParticipantListProps)
 }
 
 function ParticipantCard({ peer, isSelf }: { peer: PeerState, isSelf?: boolean }) {
+  const isHost = peer.peerId.includes('anchor-');
+
+  const containerClasses = [
+    "flex items-center justify-between p-8 rounded-[2rem] border transition-all duration-500 shadow-sm",
+    isSelf ? "bg-white border-black ring-2 ring-black ring-offset-4" : "bg-neutral-50 border-neutral-100 hover:border-neutral-300",
+    isHost && !isSelf ? "border-black/20 bg-neutral-50 shadow-md" : ""
+  ].join(" ");
+
   return (
-    <div className={`flex items-center justify-between p-8 rounded-[2rem] border transition-all duration-500 shadow-sm ${isSelf ? 'bg-white border-black ring-2 ring-black ring-offset-4' : 'bg-neutral-50 border-neutral-100 hover:border-neutral-300'}`}>
+    <div className={containerClasses}>
       <div className="flex items-center gap-6">
         <StatusDot status={peer.status} />
         <div>
-          <div className="font-black text-2xl text-black leading-tight tracking-tighter">{peer.name || 'ゲスト'} {isSelf && '(あなた)'}</div>
+          <div className="flex items-center gap-2">
+            <div className="font-black text-2xl text-black leading-tight tracking-tighter">{peer.name || 'ゲスト'} {isSelf && '(あなた)'}</div>
+            {isHost && (
+              <span className="bg-black text-white px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest">Host</span>
+            )}
+          </div>
           <div className="text-[10px] text-neutral-300 font-black uppercase tracking-tighter mt-1">PEER: {peer.peerId.slice(-6)}</div>
         </div>
       </div>

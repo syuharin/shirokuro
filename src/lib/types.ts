@@ -9,6 +9,7 @@ export interface PeerState {
   value: number; // 0-100
   isSelf: boolean;
   status: 'online' | 'reconnecting' | 'offline';
+  joinTimestamp: number; // Used for host election
   lastUpdated?: number; // timestamp
 }
 
@@ -19,7 +20,7 @@ export interface RoomState {
   labelMax: string;
 }
 
-export type PayloadType = 'SYNC_UPDATE' | 'INITIAL_PEER_LIST' | 'SYNC_TOPIC' | 'HEARTBEAT';
+export type PayloadType = 'SYNC_UPDATE' | 'INITIAL_PEER_LIST' | 'SYNC_TOPIC' | 'HEARTBEAT' | 'HOST_MIGRATION';
 
 export interface BasePayload {
   type: PayloadType;
@@ -40,6 +41,16 @@ export interface SyncUpdatePayload extends BasePayload {
     peerId: PeerId;
     name: string;
     value: number;
+    joinTimestamp: number;
+  };
+}
+
+export interface HostMigrationPayload extends BasePayload {
+  type: 'HOST_MIGRATION';
+  payload: {
+    newHostId: PeerId;
+    oldHostId: PeerId;
+    timestamp: number;
   };
 }
 
@@ -57,4 +68,4 @@ export interface HeartbeatPayload extends BasePayload {
   };
 }
 
-export type P2PPayload = SyncUpdatePayload | InitialPeerListPayload | SyncTopicPayload | HeartbeatPayload;
+export type P2PPayload = SyncUpdatePayload | InitialPeerListPayload | SyncTopicPayload | HeartbeatPayload | HostMigrationPayload;
